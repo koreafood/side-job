@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * 주문 상세 페이지 (공개용)
+ * - 역할: 주문 번호를 통해 비회원도 접근 가능한 주문 상세 내역 및 제작 과정 조회 페이지
+ * - 주요 기능:
+ *   - 주문 상세 정보(상품, 금액, 배송지 등) 표시
+ *   - 제작 단계 타임라인(ProductionStepsTimeline) 표시
+ * - 의존성: vue, vue-router, @/lib/api.ts
+ */
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
@@ -37,6 +45,10 @@ function label(v: string) {
   return map[v] ?? v
 }
 
+/**
+ * 주문 정보 로드
+ * - API: getPublicOrder
+ */
 async function load() {
   status.value = 'loading'
   error.value = null

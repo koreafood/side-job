@@ -1,4 +1,15 @@
 <script setup lang="ts">
+/**
+ * 제작 단계 관리 컴포넌트 (관리자용)
+ * - 역할: 주문의 제작 진행 단계(Production Steps)를 추가, 수정, 삭제, 순서 변경 및 사진 업로드 관리
+ * - 주요 기능:
+ *   - 새 단계 추가 (메모 입력)
+ *   - 단계별 메모 수정 및 자동 저장
+ *   - 단계 순서 변경 (위/아래 이동)
+ *   - 단계 삭제 (확인 절차 포함)
+ *   - 단계별 사진 업로드 (미리보기 제공) 및 삭제, 순서 변경
+ * - 의존성: vue, @/lib/api.ts, @/lib/types.ts
+ */
 import { onUnmounted, ref } from 'vue'
 import { api } from '@/lib/api'
 import type { ProductionStep } from '@/lib/types'
@@ -17,9 +28,14 @@ const status = ref<'idle' | 'saving'>('idle')
 const error = ref<string | null>(null)
 const newMemo = ref('')
 
+/** 로컬 이미지 미리보기 타입 정의 */
 type LocalImage = { file: File; previewUrl: string }
+/** 단계별 로컬 이미지 업로드 대기 목록 관리 */
 const local = ref<Record<string, LocalImage[]>>({})
 
+/**
+ * 특정 단계의 로컬 이미지 배열 초기화 및 반환
+ */
 function ensureLocal(stepId: string) {
   if (!local.value[stepId]) local.value[stepId] = []
   return local.value[stepId]
@@ -29,6 +45,11 @@ function localFor(stepId: string) {
   return local.value[stepId] ?? []
 }
 
+/**
+ * 파일 선택 핸들러
+ * - 목적: 사용자가 선택한 이미지를 로컬 미리보기용으로 변환하여 저장
+ * - 입력: stepId, input change event
+ */
 function onPickFiles(stepId: string, e: Event) {
   const input = e.target as HTMLInputElement
   const files = Array.from(input.files ?? [])
@@ -41,6 +62,10 @@ function onPickFiles(stepId: string, e: Event) {
   input.value = ''
 }
 
+/**
+ * 로컬 미리보기 이미지 제거
+ * - 목적: 업로드 전 대기 중인 이미지를 목록에서 제거하고 메모리 해제
+ */
 function removeLocal(stepId: string, index: number) {
   const arr = ensureLocal(stepId)
   const it = arr[index]
@@ -49,6 +74,10 @@ function removeLocal(stepId: string, index: number) {
   arr.splice(index, 1)
 }
 
+/**
+ * 새 제작 단계 추가
+ * - API: createProductionStep
+ */
 async function addStep() {
   status.value = 'saving'
   error.value = null
@@ -63,6 +92,10 @@ async function addStep() {
   }
 }
 
+/**
+ * 단계 메모 저장
+ * - API: updateProductionStep
+ */
 async function saveMemo(stepId: string, memo: string) {
   status.value = 'saving'
   error.value = null
@@ -81,6 +114,10 @@ function onMemoChange(stepId: string, e: Event) {
   void saveMemo(stepId, input.value)
 }
 
+/**
+ * 단계 순서 변경
+ * - API: moveProductionStep
+ */
 async function moveStep(stepId: string, direction: 'up' | 'down') {
   status.value = 'saving'
   error.value = null
@@ -94,6 +131,11 @@ async function moveStep(stepId: string, direction: 'up' | 'down') {
   }
 }
 
+/**
+ * 단계 삭제
+ * - API: deleteProductionStep
+ * - 주의: 사용자 확인(confirm) 후 삭제 진행
+ */
 async function deleteStep(stepId: string) {
   const ok = window.confirm('이 단계를 삭제할까요? (단계 사진도 함께 삭제됩니다)')
   if (!ok) return
@@ -109,6 +151,12 @@ async function deleteStep(stepId: string) {
   }
 }
 
+/**
+ * 선택된 사진들 서버 업로드
+ * - 로직:
+ *   1. uploadAdminImage로 파일 업로드
+ *   2. addProductionStepPhoto로 단계에 사진 연결
+ */
 async function uploadPhotos(stepId: string) {
   const arr = ensureLocal(stepId)
   if (arr.length === 0) return
@@ -130,6 +178,10 @@ async function uploadPhotos(stepId: string) {
   }
 }
 
+/**
+ * 단계 사진 삭제
+ * - API: deleteProductionStepPhoto
+ */
 async function deletePhoto(photoId: string) {
   const ok = window.confirm('이 사진을 삭제할까요?')
   if (!ok) return
@@ -145,6 +197,10 @@ async function deletePhoto(photoId: string) {
   }
 }
 
+/**
+ * 단계 사진 순서 변경
+ * - API: moveProductionStepPhoto
+ */
 async function movePhoto(photoId: string, direction: 'up' | 'down') {
   status.value = 'saving'
   error.value = null
@@ -168,6 +224,10 @@ function formatDate(s: string) {
   return d.toLocaleString()
 }
 
+/**
+ * 컴포넌트 해제 시 메모리 정리
+ * - 생성된 ObjectURL 해제
+ */
 onUnmounted(() => {
   for (const arr of Object.values(local.value) as LocalImage[][]) {
     for (const it of arr) URL.revokeObjectURL(it.previewUrl)

@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * 판매자 프로필 페이지
+ * - 역할: 특정 판매자의 정보와 최신 등록 상품을 보여주는 페이지
+ * - 주요 기능:
+ *   - 판매자 상세 정보 조회 (프로필, 소개글)
+ *   - 판매자의 최신 상품 3개 조회 및 표시
+ * - 의존성: vue, vue-router, @/lib/api.ts
+ */
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/lib/api'
@@ -18,6 +26,7 @@ onMounted(async () => {
   status.value = 'loading'
   error.value = null
   try {
+    // 판매자 정보와 상품 목록 병렬 조회
     seller.value = await api.getSeller(sellerId)
     latest.value = await api.listSellerProducts(sellerId, 3)
     status.value = 'ready'

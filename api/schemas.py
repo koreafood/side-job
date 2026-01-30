@@ -1,4 +1,5 @@
 from __future__ import annotations
+# API 입출력(pydantic) 모델 정의. 프론트/백엔드 간 데이터 형식을 명확히 합니다.
 
 from datetime import datetime
 

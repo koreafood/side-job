@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// 상품 상세 페이지: 상세정보, 리뷰, 주문 목록과 관리자용 수정/삭제 제어
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
@@ -78,10 +79,12 @@ function goEdit() {
 }
 
 function openDeleteConfirm() {
+  // 페이지 내 삭제 확인 모달을 열어요
   confirmDeleteOpen.value = true
 }
 
 function cancelDelete() {
+  // 삭제 취소 시 모달을 닫아요
   confirmDeleteOpen.value = false
 }
 
@@ -94,6 +97,7 @@ async function confirmDelete() {
     status.value = 'error'
     error.value = e instanceof Error ? e.message : '상품 삭제에 실패했어요.'
   } finally {
+    // 삭제 성공/실패와 상관없이 모달은 닫아요
     confirmDeleteOpen.value = false
   }
 }

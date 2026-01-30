@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * 제작 단계 타임라인 컴포넌트 (사용자용)
+ * - 역할: 주문의 제작 진행 과정을 타임라인 형태로 시각화하여 보여줌
+ * - 주요 기능:
+ *   - 단계별 메모 및 사진 표시
+ *   - 사진 클릭 시 확대 모달 표시
+ * - 의존성: vue, @/lib/types.ts
+ */
 import { ref } from 'vue'
 import type { ProductionStep } from '@/lib/types'
 
@@ -6,14 +14,17 @@ defineProps<{
   steps: ProductionStep[]
 }>()
 
+/** 확대해서 볼 이미지 URL (null이면 모달 닫힘) */
 const openUrl = ref<string | null>(null)
 
+/** 날짜 포맷팅 함수 */
 function formatDate(s: string) {
   const d = new Date(s)
   if (Number.isNaN(d.getTime())) return s
   return d.toLocaleString()
 }
 
+/** 이미지 모달 닫기 */
 function close() {
   openUrl.value = null
 }

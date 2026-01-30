@@ -1,4 +1,19 @@
 <script setup lang="ts">
+/**
+ * 파일 역할: 관리자용 주문 상세 페이지
+ *
+ * 주요 기능:
+ * 1. 주문 상세 정보 조회 (주문자, 배송지, 상품 등)
+ * 2. 주문 상태 변경 (결제완료, 배송중 등)
+ * 3. 제작 과정(Production Steps) 관리 (Admin 전용)
+ * 4. 주문 변경 이력 조회
+ *
+ * 의존성:
+ * - api: 백엔드 API 호출 (getAdminOrder, changeAdminOrderStatus)
+ * - AdminOrderDetail, AdminOrderStatus: 타입 정의
+ * - ProductionStepsAdmin: 제작 단계 관리 컴포넌트
+ */
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
@@ -10,25 +25,42 @@ const router = useRouter()
 
 const orderId = computed(() => String(route.params.orderId))
 
+// 로딩/저장/에러 상태 관리
 const status = ref<'idle' | 'loading' | 'saving' | 'error' | 'ready'>('idle')
 const error = ref<string | null>(null)
 const order = ref<AdminOrderDetail | null>(null)
 
+// 상태 변경 폼 데이터
 const form = reactive({
-  nextStatus: '' as '' | AdminOrderStatus,
-  reason: '',
+  nextStatus: '' as '' | AdminOrderStatus, // 변경할 다음 상태
+  reason: '', // 변경 사유
 })
 
+/**
+ * 금액 포맷팅 함수
+ * @param v 금액 (숫자)
+ * @returns '¥1,000' 형식의 문자열
+ */
 function money(v: number) {
   return `¥${v.toLocaleString()}`
 }
 
+/**
+ * 날짜 포맷팅 함수
+ * @param s 날짜 문자열
+ * @returns 로컬 날짜 시간 문자열
+ */
 function formatDate(s: string) {
   const d = new Date(s)
   if (Number.isNaN(d.getTime())) return s
   return d.toLocaleString()
 }
 
+/**
+ * 상태 라벨 반환 (한글)
+ * @param v 상태 코드
+ * @returns 한글 라벨
+ */
 function label(v: string) {
   const map: Record<string, string> = {
     pending: '결제 대기',
@@ -44,6 +76,11 @@ function label(v: string) {
   return map[v] ?? v
 }
 
+/**
+ * 현재 상태에서 변경 가능한 다음 상태 목록 반환
+ * @param current 현재 주문 상태
+ * @returns 변경 가능한 상태 목록 배열
+ */
 function allowedNext(current: AdminOrderStatus): AdminOrderStatus[] {
   const table: Record<AdminOrderStatus, AdminOrderStatus[]> = {
     pending: ['paid', 'cancelled'],
@@ -57,6 +94,9 @@ function allowedNext(current: AdminOrderStatus): AdminOrderStatus[] {
   return table[current] ?? []
 }
 
+/**
+ * 주문 상세 정보 로드
+ */
 async function load() {
   status.value = 'loading'
   error.value = null
@@ -71,6 +111,9 @@ async function load() {
   }
 }
 
+/**
+ * 주문 상태 변경 저장
+ */
 async function saveStatus() {
   if (!order.value) return
   if (!form.nextStatus) return
@@ -90,6 +133,11 @@ async function saveStatus() {
   }
 }
 
+/**
+ * 제작 단계 업데이트 핸들러
+ * 자식 컴포넌트(ProductionStepsAdmin)에서 변경 사항 발생 시 호출됨
+ * @param next 업데이트된 제작 단계 배열
+ */
 function updateSteps(next: AdminOrderDetail['productionSteps']) {
   if (!order.value) return
   order.value.productionSteps = next

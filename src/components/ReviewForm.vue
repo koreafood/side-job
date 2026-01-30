@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * 리뷰 작성 폼 컴포넌트
+ * - 역할: 사용자가 상품에 대한 리뷰(닉네임, 평점, 내용)를 작성하고 제출
+ * - 주요 기능: 입력 값 검증, 리뷰 생성 API 호출
+ * - 의존성: vue, @/lib/api.ts, @/lib/types.ts
+ */
 import { ref } from 'vue'
 import { api } from '@/lib/api'
 import type { Review } from '@/lib/types'
@@ -12,6 +18,19 @@ const body = ref('')
 const status = ref<'idle' | 'saving' | 'error'>('idle')
 const error = ref<string | null>(null)
 
+/**
+ * 리뷰 제출 함수
+ * - 목적: 입력된 리뷰 정보를 서버로 전송하여 저장합니다.
+ * - 입력: authorName, rating, body (Reactive 상태)
+ * - 출력: 없음 (emit으로 상위 컴포넌트에 알림)
+ * - 예외 처리:
+ *   - 필수 입력값 누락 시 에러 메시지 표시
+ *   - API 호출 실패 시 에러 메시지 표시
+ * - 비즈니스 로직:
+ *   1. 입력값 검증
+ *   2. API `createReview` 호출
+ *   3. 성공 시 폼 초기화 및 `created` 이벤트 발생
+ */
 async function submit() {
   const name = authorName.value.trim()
   const text = body.value.trim()
@@ -29,6 +48,7 @@ async function submit() {
       body: text,
     })
     emit('created', created)
+    // 폼 초기화
     authorName.value = ''
     rating.value = 5
     body.value = ''
@@ -43,6 +63,7 @@ async function submit() {
 <template>
   <form class="space-y-3" @submit.prevent="submit">
     <div class="grid gap-3 sm:grid-cols-2">
+      <!-- 닉네임 입력 -->
       <div class="space-y-1">
         <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">닉네임</div>
         <input
@@ -51,6 +72,7 @@ async function submit() {
           placeholder="예) 민지"
         />
       </div>
+      <!-- 평점 선택 -->
       <div class="space-y-1">
         <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">평점</div>
         <select
@@ -61,6 +83,7 @@ async function submit() {
         </select>
       </div>
     </div>
+    <!-- 리뷰 내용 입력 -->
     <div class="space-y-1">
       <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">리뷰</div>
       <textarea
@@ -70,6 +93,8 @@ async function submit() {
         placeholder="상품이 어땠는지 적어 주세요"
       />
     </div>
+    
+    <!-- 제출 버튼 및 에러 메시지 -->
     <div class="flex items-center justify-between gap-3">
       <div v-if="error" class="text-xs font-semibold text-rose-600">{{ error }}</div>
       <button
@@ -82,4 +107,3 @@ async function submit() {
     </div>
   </form>
 </template>
-

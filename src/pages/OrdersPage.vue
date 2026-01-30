@@ -1,4 +1,13 @@
 <script setup lang="ts">
+/**
+ * 내 주문 목록 페이지
+ * - 역할: 사용자가 브라우저(로컬 스토리지)에 저장된 주문 내역을 확인하는 페이지
+ * - 주요 기능:
+ *   - 로컬 스토리지에서 주문 ID 목록 조회
+ *   - 각 주문의 상세 정보(상태, 금액 등) API 조회
+ *   - 주문 ID 직접 추가 및 목록에서 삭제
+ * - 의존성: vue, vue-router, @/lib/api.ts
+ */
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/lib/api'
@@ -10,6 +19,7 @@ const status = ref<'idle' | 'loading' | 'error' | 'ready'>('idle')
 const error = ref<string | null>(null)
 const inputOrderId = ref('')
 
+/** 주문 목록 테이블 행 데이터 타입 */
 type Row = { id: string; detail?: PublicOrderDetail; error?: string }
 const rows = ref<Row[]>([])
 
@@ -23,6 +33,7 @@ function formatDate(s: string) {
   return d.toLocaleString()
 }
 
+/** 주문 상태 한글 라벨 변환 */
 function label(v: string) {
   const map: Record<string, string> = {
     pending: '결제 대기',
@@ -36,6 +47,7 @@ function label(v: string) {
   return map[v] ?? v
 }
 
+/** 로컬 스토리지에서 주문 ID 목록 읽기 */
 function readMyOrders(): string[] {
   try {
     const raw = localStorage.getItem('myOrders')
@@ -47,12 +59,20 @@ function readMyOrders(): string[] {
   }
 }
 
+/** 로컬 스토리지에 주문 ID 목록 저장 */
 function writeMyOrders(ids: string[]) {
   localStorage.setItem('myOrders', JSON.stringify(ids))
 }
 
 const ids = computed(() => rows.value.map((r) => r.id))
 
+/**
+ * 주문 목록 로드 및 상세 정보 조회
+ * - 로직:
+ *   1. 로컬 스토리지에서 ID 목록 읽기
+ *   2. 각 ID별로 API `getPublicOrder` 병렬 호출
+ *   3. 결과(성공/실패)를 행 데이터에 업데이트
+ */
 async function load() {
   status.value = 'loading'
   error.value = null
@@ -72,6 +92,7 @@ async function load() {
   status.value = 'ready'
 }
 
+/** 주문 ID 수동 추가 */
 function add() {
   const id = inputOrderId.value.trim()
   if (!id) return
@@ -85,6 +106,7 @@ function add() {
   void load()
 }
 
+/** 목록에서 주문 제거 (로컬 스토리지 삭제) */
 function remove(id: string) {
   const next = ids.value.filter((it) => it !== id)
   writeMyOrders(next)

@@ -1,4 +1,14 @@
 <script setup lang="ts">
+/**
+ * 장바구니 페이지
+ * - 역할: 사용자가 담은 상품 목록을 확인하고 주문(Checkout)을 진행하는 페이지
+ * - 주요 기능:
+ *   - 장바구니 아이템 목록 표시 (수량 조절, 삭제)
+ *   - 주문자 정보 입력 폼 (이름, 연락처, 주소 등)
+ *   - 유효성 검사 및 주문 생성 요청
+ *   - 주문 완료 시 주문 내역 로컬 스토리지 저장 (비회원 주문 추적용)
+ * - 의존성: vue, vue-router, useCartStore
+ */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useCartStore } from '@/composables/useCartStore'
 import { useRouter } from 'vue-router'
@@ -9,6 +19,7 @@ const orderId = ref<string | null>(null)
 const formError = ref<string | null>(null)
 const router = useRouter()
 
+/** 주문자 및 배송 정보 입력 폼 상태 */
 const form = reactive({
   customerName: '',
   customerPhone: '',
@@ -17,12 +28,22 @@ const form = reactive({
   shippingMemo: '',
 })
 
+/** 장바구니 아이템 목록 (Computed) */
 const items = computed(() => cart.state.cart?.items ?? [])
 
 function money(v: number) {
   return `¥${v.toLocaleString()}`
 }
 
+/**
+ * 주문 생성 함수
+ * - 목적: 입력된 정보를 검증하고 주문을 생성
+ * - 로직:
+ *   1. 필수 입력값 검증
+ *   2. cart.checkout() 호출
+ *   3. 성공 시 로컬 스토리지에 주문 ID 저장 (비회원 주문 내역 관리)
+ *   4. 완료 메시지 표시
+ */
 async function placeOrder() {
   orderMessage.value = null
   orderId.value = null
@@ -56,6 +77,7 @@ async function placeOrder() {
     orderMessage.value = `주문이 생성됐어요. 주문번호: ${order.id} (총액 ${money(order.totalJpy)})`
     orderId.value = order.id
     try {
+      // 로컬 스토리지에 내 주문 ID 목록 업데이트 (최대 50개)
       const raw = localStorage.getItem('myOrders')
       const parsed = raw ? (JSON.parse(raw) as unknown) : []
       const list = Array.isArray(parsed) ? parsed.filter((it): it is string => typeof it === 'string') : []

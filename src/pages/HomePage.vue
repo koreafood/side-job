@@ -1,4 +1,13 @@
 <script setup lang="ts">
+/**
+ * 메인 홈페이지 컴포넌트
+ * - 역할: 쇼핑몰의 메인 화면으로 상품 목록을 보여주고 검색 기능을 제공
+ * - 주요 기능:
+ *   - 전체 상품 목록 조회
+ *   - 검색어(query param 'q')에 따른 필터링
+ *   - 로딩 및 에러 상태 처리
+ * - 의존성: vue, vue-router, @/lib/api.ts
+ */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/lib/api'
@@ -10,8 +19,15 @@ const status = ref<'idle' | 'loading' | 'error' | 'ready'>('idle')
 const error = ref<string | null>(null)
 const products = ref<Product[]>([])
 
+/** 현재 URL 쿼리 파라미터에서 검색어 추출 (Computed) */
 const q = computed(() => (typeof route.query.q === 'string' ? route.query.q : ''))
 
+/**
+ * 상품 목록 로드 함수
+ * - 목적: API를 통해 상품 목록을 가져와 화면에 표시
+ * - 입력: q (검색어)
+ * - 출력: 없음 (products 상태 업데이트)
+ */
 async function load() {
   status.value = 'loading'
   error.value = null
@@ -24,6 +40,7 @@ async function load() {
   }
 }
 
+/** 검색어가 변경되면 목록 다시 로드 */
 watch(q, () => {
   void load()
 })

@@ -1,4 +1,19 @@
 <script setup lang="ts">
+/**
+ * 파일 역할: 관리자용 주문 목록 페이지
+ *
+ * 주요 기능:
+ * 1. 전체 주문 목록 조회 (페이지네이션)
+ * 2. 주문 검색 및 필터링 (검색어, 날짜, 주문상태, 결제상태, 배송상태)
+ * 3. 주문 상세 페이지 이동
+ * 4. 주문 상태별 배지 표시
+ *
+ * 의존성:
+ * - api: 백엔드 API 호출 (listAdminOrders)
+ * - AdminOrderList, AdminOrderStatus, etc: 타입 정의
+ * - useRouter: 페이지 이동
+ */
+
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/lib/api'
@@ -6,37 +21,57 @@ import type { AdminOrderList, AdminOrderStatus, AdminPaymentStatus, AdminShippin
 
 const router = useRouter()
 
+// 로딩/에러 상태 관리
 const status = ref<'idle' | 'loading' | 'error' | 'ready'>('idle')
 const error = ref<string | null>(null)
 
+// 검색 필터 상태
 const filters = reactive({
-  q: '',
-  fromDate: '',
-  toDate: '',
-  orderStatus: '' as '' | AdminOrderStatus,
-  paymentStatus: '' as '' | AdminPaymentStatus,
-  shippingStatus: '' as '' | AdminShippingStatus,
+  q: '', // 검색어 (주문번호/이름/연락처)
+  fromDate: '', // 시작일
+  toDate: '', // 종료일
+  orderStatus: '' as '' | AdminOrderStatus, // 주문 상태
+  paymentStatus: '' as '' | AdminPaymentStatus, // 결제 상태
+  shippingStatus: '' as '' | AdminShippingStatus, // 배송 상태
 })
 
+// 페이지네이션 상태
 const page = ref(1)
 const pageSize = ref(20)
-const data = ref<AdminOrderList | null>(null)
+const data = ref<AdminOrderList | null>(null) // 불러온 데이터
 
+// 총 페이지 수 계산
 const totalPages = computed(() => {
   if (!data.value) return 1
   return Math.max(1, Math.ceil(data.value.total / data.value.pageSize))
 })
 
+/**
+ * 금액 포맷팅 함수
+ * @param v 금액 (숫자)
+ * @returns '¥1,000' 형식의 문자열
+ */
 function money(v: number) {
   return `¥${v.toLocaleString()}`
 }
 
+/**
+ * 날짜 포맷팅 함수
+ * @param s 날짜 문자열
+ * @returns 로컬 날짜 시간 문자열
+ */
 function formatDate(s: string) {
   const d = new Date(s)
   if (Number.isNaN(d.getTime())) return s
   return d.toLocaleString()
 }
 
+/**
+ * 상태 배지 스타일 클래스 반환
+ * @param kind 상태 종류 ('order' | 'payment' | 'shipping')
+ * @param v 상태 값
+ * @returns Tailwind CSS 클래스 문자열
+ */
 function badgeClass(kind: 'order' | 'payment' | 'shipping', v: string) {
   if (kind === 'order') {
     if (v === 'pending') return 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100'
@@ -58,6 +93,11 @@ function badgeClass(kind: 'order' | 'payment' | 'shipping', v: string) {
   return 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100'
 }
 
+/**
+ * 상태 라벨 반환 (한글)
+ * @param v 상태 코드
+ * @returns 한글 라벨
+ */
 function label(v: string) {
   const map: Record<string, string> = {
     pending: '결제 대기',
@@ -73,6 +113,10 @@ function label(v: string) {
   return map[v] ?? v
 }
 
+/**
+ * 주문 목록 로드 함수
+ * 필터 조건에 따라 API를 호출하여 데이터를 갱신합니다.
+ */
 async function load() {
   status.value = 'loading'
   error.value = null
@@ -94,6 +138,10 @@ async function load() {
   }
 }
 
+/**
+ * 필터 초기화 함수
+ * 모든 필터 조건을 초기화하고 첫 페이지를 로드합니다.
+ */
 function reset() {
   filters.q = ''
   filters.fromDate = ''
@@ -105,15 +153,25 @@ function reset() {
   void load()
 }
 
+/**
+ * 상세 페이지 이동
+ * @param orderId 주문 ID
+ */
 function goDetail(orderId: string) {
   router.push({ name: 'admin-order-detail', params: { orderId } })
 }
 
+/**
+ * 이전 페이지 이동
+ */
 function prevPage() {
   page.value = Math.max(1, page.value - 1)
   void load()
 }
 
+/**
+ * 다음 페이지 이동
+ */
 function nextPage() {
   page.value = Math.min(totalPages.value, page.value + 1)
   void load()

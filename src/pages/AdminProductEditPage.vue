@@ -1,4 +1,19 @@
 <script setup lang="ts">
+/**
+ * 파일 역할: 관리자용 상품 수정 페이지
+ *
+ * 주요 기능:
+ * 1. 기존 상품 정보 로드 및 수정 (판매자, 상품명, 가격, 설명 등)
+ * 2. 이미지 관리 (기존 이미지 삭제/순서변경/대표이미지 지정, 새 이미지 업로드)
+ * 3. 리치 텍스트 에디터(Tiptap)를 이용한 상세 설명 수정
+ * 4. 상품 삭제 (삭제 확인 모달 포함)
+ *
+ * 의존성:
+ * - api: 백엔드 API 호출 (getProduct, listSellers, updateAdminProduct, deleteAdminProduct, uploadAdminImage)
+ * - Tiptap Editor: 리치 텍스트 편집
+ * - useRouter: 수정/삭제 후 페이지 이동
+ */
+
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
@@ -12,18 +27,22 @@ const router = useRouter()
 
 const productId = computed(() => String(route.params.productId))
 
+// 로딩/제출/에러 상태 관리
 const status = ref<'idle' | 'loading' | 'submitting' | 'error' | 'ready'>('idle')
 const error = ref<string | null>(null)
 const sellers = ref<Seller[]>([])
 const original = ref<Product | null>(null)
 
+// 로컬 이미지 미리보기 타입 및 상태
 type LocalImage = { file: File; previewUrl: string }
 const localImages = ref<LocalImage[]>([])
 
+// 이미지 관리 상태
 const existingImageUrls = ref<string[]>([])
-const coverUrl = ref<string | null>(null)
-const confirmDeleteOpen = ref(false)
+const coverUrl = ref<string | null>(null) // 대표 이미지 URL
+const confirmDeleteOpen = ref(false) // 삭제 확인 모달 상태
 
+// 상품 수정 폼 데이터
 const form = reactive({
   sellerId: '',
   name: '',
@@ -32,6 +51,7 @@ const form = reactive({
   priceJpy: 0,
 })
 
+// 제출 가능 여부 계산
 const canSubmit = computed(() => {
   if (!form.sellerId.trim()) return false
   if (!form.name.trim()) return false
@@ -41,6 +61,7 @@ const canSubmit = computed(() => {
   return hasAnyImage
 })
 
+// Tiptap 에디터 설정
 const editor = useEditor({
   extensions: [StarterKit, Image],
   content: '',
@@ -49,6 +70,10 @@ const editor = useEditor({
   },
 })
 
+/**
+ * 에디터 내용 설정
+ * @param html HTML 문자열
+ */
 function setEditorContent(html: string) {
   form.detailsHtml = html
   editor?.value?.chain().setContent(html || '').run()
@@ -56,6 +81,10 @@ function setEditorContent(html: string) {
 
 const detailImgInput = ref<HTMLInputElement | null>(null)
 
+/**
+ * 상세 설명 이미지 선택 핸들러
+ * 에디터 내에 삽입할 이미지를 업로드하고 에디터에 추가합니다.
+ */
 async function onPickDetailImages(e: Event) {
   const input = e.target as HTMLInputElement
   const files = Array.from(input.files ?? [])
@@ -67,21 +96,37 @@ async function onPickDetailImages(e: Event) {
   input.value = ''
 }
 
+/**
+ * 상세 설명 이미지 파일 선택창 열기
+ */
 function triggerDetailImage() {
   detailImgInput.value?.click()
 }
+
+/**
+ * 기존 이미지 삭제 핸들러
+ * @param index 삭제할 기존 이미지 인덱스
+ */
 function removeExistingImage(index: number) {
   const removed = existingImageUrls.value.splice(index, 1)[0]
   if (removed && coverUrl.value === removed) {
+    // 삭제된 이미지가 대표 이미지였다면 첫 번째 이미지를 대표로 설정
     coverUrl.value = existingImageUrls.value[0] ?? null
   }
 }
 
+/**
+ * 기존 이미지를 대표 이미지로 설정
+ * @param index 설정할 이미지 인덱스
+ */
 function setCoverExisting(index: number) {
   const url = existingImageUrls.value[index]
   if (url) coverUrl.value = url
 }
 
+/**
+ * 로컬 파일 선택 핸들러 (새 이미지 추가)
+ */
 function onPickFiles(e: Event) {
   const input = e.target as HTMLInputElement
   const files = Array.from(input.files ?? [])
@@ -93,6 +138,10 @@ function onPickFiles(e: Event) {
   input.value = ''
 }
 
+/**
+ * 로컬 이미지 삭제 핸들러
+ * @param index 삭제할 로컬 이미지 인덱스
+ */
 function removeLocalImage(index: number) {
   const it = localImages.value[index]
   if (!it) return
@@ -100,6 +149,10 @@ function removeLocalImage(index: number) {
   localImages.value.splice(index, 1)
 }
 
+/**
+ * 상품 정보 로드
+ * 상품 정보와 판매자 목록을 병렬로 조회합니다.
+ */
 async function load() {
   status.value = 'loading'
   error.value = null
@@ -122,18 +175,24 @@ async function load() {
   }
 }
 
+/**
+ * 상품 수정 제출
+ */
 async function submit() {
   if (!canSubmit.value) return
   status.value = 'submitting'
   error.value = null
   try {
     const urlImages = existingImageUrls.value.map((it) => it.trim()).filter(Boolean)
+    
+    // 1. 새 로컬 이미지 업로드
     const uploaded = [] as string[]
     for (const it of localImages.value) {
       const res = await api.uploadAdminImage(it.file)
       uploaded.push(res.url)
     }
 
+    // 2. 이미지 순서 정렬 (대표 이미지 -> 새 이미지 -> 나머지 기존 이미지)
     const others = coverUrl.value ? urlImages.filter((u) => u !== coverUrl.value) : urlImages
     const ordered = [
       ...(coverUrl.value ? [coverUrl.value] : []),
@@ -141,6 +200,8 @@ async function submit() {
       ...others,
     ]
     const images = ordered.map((url, i) => ({ url, sort: i + 1 }))
+
+    // 3. 상품 수정 API 호출
     const updated = await api.updateAdminProduct(productId.value, {
       sellerId: form.sellerId,
       name: form.name.trim(),
@@ -156,10 +217,16 @@ async function submit() {
   }
 }
 
+/**
+ * 상품 삭제 확인 모달 열기
+ */
 async function removeProduct() {
   confirmDeleteOpen.value = true
 }
 
+/**
+ * 상품 삭제 실행
+ */
 async function confirmDelete() {
   status.value = 'submitting'
   error.value = null
@@ -174,6 +241,9 @@ async function confirmDelete() {
   }
 }
 
+/**
+ * 상품 삭제 취소
+ */
 function cancelDelete() {
   confirmDeleteOpen.value = false
 }

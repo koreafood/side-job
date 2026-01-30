@@ -1,4 +1,21 @@
+"""
+파일 역할: FastAPI 백엔드 메인 애플리케이션
+
+주요 기능:
+1. FastAPI 앱 초기화 및 설정 (CORS, 정적 파일 마운트)
+2. 데이터베이스 초기화 및 시딩 (startup 이벤트)
+3. API 엔드포인트 정의 (상품, 주문, 리뷰, 관리자 등)
+4. 예외 처리 및 에러 핸들링
+
+의존성:
+- fastapi: 웹 프레임워크
+- sqlmodel: ORM 및 데이터베이스 세션
+- api.db: 데이터베이스 연결 및 세션
+- api.models: 도메인 모델
+- api.schemas: 요청/응답 스키마
+"""
 from __future__ import annotations
+# FastAPI 백엔드: 상품/주문 API와 간단한 관리자 로그인 세션을 제공
 
 from datetime import datetime, timedelta
 import os
@@ -78,7 +95,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-ADMIN_PASSWORD = "qazwsx12##"
+ADMIN_PASSWORD = "qazwsx12##"  # 단일 관리자 비밀번호(데모용, DB 없이 쿠키로 세션 유지)
 
 
 @app.on_event("startup")
@@ -321,6 +338,7 @@ def list_seller_products(
 
 @app.post("/api/admin/login", response_model=AdminSessionOut)
 def admin_login(body: AdminLoginIn) -> AdminSessionOut:
+    # 비밀번호가 일치하면 8시간 유효한 관리자 쿠키를 설정
     if body.password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="비밀번호가 올바르지 않아요.")
     resp = Response()
@@ -340,6 +358,7 @@ def admin_login(body: AdminLoginIn) -> AdminSessionOut:
 
 @app.get("/api/admin/session", response_model=AdminSessionOut)
 def admin_session(is_admin: str | None = Cookie(default=None)) -> AdminSessionOut:
+    # 클라이언트가 보낸 is_admin 쿠키를 기준으로 관리자 여부를 응답
     return AdminSessionOut(isAdmin=is_admin == "1")
 
 
@@ -619,6 +638,7 @@ def create_order(
 
     now = datetime.utcnow()
     order_id = f"ord_{uuid4().hex}"
+    # 주문상세 번호: YYYYMMDD_일련번호(당일 기준 0001부터)
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     day_end = day_start + timedelta(days=1)
     count_today = session.exec(

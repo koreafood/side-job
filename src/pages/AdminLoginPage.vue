@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// 관리자 로그인 페이지: 비밀번호 검증과 친화적인 오류 메시지 처리
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '@/composables/useAdminStore'
