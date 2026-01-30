@@ -24,6 +24,10 @@ export type Product = {
   images: ProductImage[]
 }
 
+export type AdminSession = {
+  isAdmin: boolean
+}
+
 export type Review = {
   id: string
   productId: string

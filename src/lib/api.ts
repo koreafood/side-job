@@ -9,6 +9,7 @@ import type {
   Review,
   Seller,
   ProductionStep,
+  AdminSession,
 } from '@/lib/types'
 
 type ApiErrorBody = {
@@ -59,6 +60,12 @@ export const api = {
   health: () => apiFetch<{ ok: true }>('/api/health'),
   listProducts: (query?: string) =>
     apiFetch<Product[]>(`/api/products${query ? `?query=${encodeURIComponent(query)}` : ''}`),
+  getAdminSession: () => apiFetch<AdminSession>('/api/admin/session'),
+  loginAdmin: (password: string) =>
+    apiFetch<AdminSession>('/api/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    }),
   getProduct: (id: string) => apiFetch<Product>(`/api/products/${encodeURIComponent(id)}`),
   listSellers: () => apiFetch<Seller[]>('/api/sellers'),
   getSeller: (id: string) => apiFetch<Seller>(`/api/sellers/${encodeURIComponent(id)}`),

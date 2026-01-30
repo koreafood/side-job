@@ -3,10 +3,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ClipboardList, Package, Plus, Search, ShoppingCart } from 'lucide-vue-next'
 import { useCartStore } from '@/composables/useCartStore'
+import { useAdminStore } from '@/composables/useAdminStore'
 
 const route = useRoute()
 const router = useRouter()
 const cart = useCartStore()
+const admin = useAdminStore()
 
 const q = ref<string>(typeof route.query.q === 'string' ? route.query.q : '')
 
@@ -26,6 +28,7 @@ function submitSearch() {
 
 onMounted(() => {
   void cart.refresh()
+  void admin.refresh()
 })
 </script>
 
@@ -81,6 +84,7 @@ onMounted(() => {
         type="button"
         class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
         @click="$router.push({ name: 'admin-product-new' })"
+        v-if="admin.isAdmin.value"
       >
         <Plus class="h-4 w-4" />
         <span class="hidden sm:inline">상품 등록</span>
@@ -90,6 +94,7 @@ onMounted(() => {
         type="button"
         class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
         @click="$router.push({ name: 'admin-orders' })"
+        v-if="admin.isAdmin.value"
       >
         <ClipboardList class="h-4 w-4" />
         <span class="hidden sm:inline">주문 관리</span>

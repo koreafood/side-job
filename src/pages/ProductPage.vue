@@ -9,11 +9,13 @@ import ReviewList from '@/components/ReviewList.vue'
 import ReviewForm from '@/components/ReviewForm.vue'
 import { useCartStore } from '@/composables/useCartStore'
 import { ShoppingCart } from 'lucide-vue-next'
+import { useAdminStore } from '@/composables/useAdminStore'
 
 const route = useRoute()
 const router = useRouter()
 const cart = useCartStore()
 const productId = computed(() => String(route.params.productId))
+const admin = useAdminStore()
 
 const status = ref<'loading' | 'error' | 'ready'>('loading')
 const error = ref<string | null>(null)
@@ -21,6 +23,7 @@ const product = ref<Product | null>(null)
 const seller = ref<Seller | null>(null)
 const reviews = ref<Review[]>([])
 const productOrders = ref<ProductOrderSummary[]>([])
+const confirmDeleteOpen = ref(false)
 
 async function load() {
   status.value = 'loading'
@@ -74,16 +77,24 @@ function goEdit() {
   router.push({ name: 'admin-product-edit', params: { productId: product.value.id } })
 }
 
-async function removeProduct() {
+function openDeleteConfirm() {
+  confirmDeleteOpen.value = true
+}
+
+function cancelDelete() {
+  confirmDeleteOpen.value = false
+}
+
+async function confirmDelete() {
   if (!product.value) return
-  const ok = window.confirm('정말로 이 상품을 삭제할까요?')
-  if (!ok) return
   try {
     await api.deleteAdminProduct(product.value.id)
     await router.push({ name: 'home' })
   } catch (e) {
     status.value = 'error'
     error.value = e instanceof Error ? e.message : '상품 삭제에 실패했어요.'
+  } finally {
+    confirmDeleteOpen.value = false
   }
 }
 
@@ -195,13 +206,15 @@ onMounted(() => {
               type="button"
               class="inline-flex w-full items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
               @click="goEdit"
+              v-if="admin.isAdmin.value"
             >
               수정
             </button>
             <button
               type="button"
               class="inline-flex w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200 dark:hover:bg-rose-950/60"
-              @click="removeProduct"
+              @click="openDeleteConfirm"
+              v-if="admin.isAdmin.value"
             >
               삭제
             </button>
@@ -232,6 +245,29 @@ onMounted(() => {
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
           <div class="text-sm font-semibold">설명</div>
           <p class="mt-2 whitespace-pre-wrap leading-6">{{ product.description }}</p>
+        </div>
+
+        <div
+          v-if="confirmDeleteOpen"
+          class="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200"
+        >
+          <div class="font-semibold">정말로 이 상품을 삭제할까요?</div>
+          <div class="mt-4 flex gap-2">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+              @click="cancelDelete"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
+              @click="confirmDelete"
+            >
+              삭제
+            </button>
+          </div>
         </div>
       </aside>
     </div>

@@ -123,6 +123,14 @@ class AdminOrderListOut(BaseModel):
     pageSize: int
 
 
+class AdminSessionOut(BaseModel):
+    isAdmin: bool
+
+
+class AdminLoginIn(BaseModel):
+    password: str = Field(min_length=1, max_length=200)
+
+
 class AdminOrderItemOut(BaseModel):
     id: str
     productId: str

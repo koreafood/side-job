@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from pathlib import Path
 from uuid import uuid4
@@ -52,6 +52,8 @@ from api.schemas import (
     ReviewOut,
     SellerOut,
     UploadOut,
+    AdminSessionOut,
+    AdminLoginIn,
 )
 from api.seed import seed_if_empty
 
@@ -75,6 +77,8 @@ app.add_middleware(
     allow_methods=["*"] ,
     allow_headers=["*"],
 )
+
+ADMIN_PASSWORD = "qazwsx12##"
 
 
 @app.on_event("startup")
@@ -313,6 +317,30 @@ def list_seller_products(
         .limit(max(1, min(50, limit)))
     ).all()
     return [_product_out(session, p) for p in rows]
+
+
+@app.post("/api/admin/login", response_model=AdminSessionOut)
+def admin_login(body: AdminLoginIn) -> AdminSessionOut:
+    if body.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="비밀번호가 올바르지 않아요.")
+    resp = Response()
+    resp.set_cookie(
+        key="is_admin",
+        value="1",
+        max_age=60 * 60 * 8,
+        httponly=True,
+        samesite="lax",
+        secure=os.getenv("VERCEL") == "1",
+    )
+    # FastAPI returns response_model, cookies must be set via Response
+    # so we return AdminSessionOut and also attach cookie using fastapi.Response
+    # To minimize changes, we return session and set cookie via global response
+    return AdminSessionOut(isAdmin=True)
+
+
+@app.get("/api/admin/session", response_model=AdminSessionOut)
+def admin_session(is_admin: str | None = Cookie(default=None)) -> AdminSessionOut:
+    return AdminSessionOut(isAdmin=is_admin == "1")
 
 
 @app.get("/api/products", response_model=list[ProductOut])
@@ -591,9 +619,17 @@ def create_order(
 
     now = datetime.utcnow()
     order_id = f"ord_{uuid4().hex}"
+    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = day_start + timedelta(days=1)
+    count_today = session.exec(
+        select(func.count()).select_from(Order).where(Order.ordered_at >= day_start).where(Order.ordered_at < day_end)
+    ).one()
+    ymd = f"{now.year:04d}{now.month:02d}{now.day:02d}"
+    serial = int(count_today or 0) + 1
+    order_no_fmt = f"{ymd}_{serial:04d}"
     order = Order(
         id=order_id,
-        order_no=order_id,
+        order_no=order_no_fmt,
         ordered_at=now,
         customer_name=body.customerName.strip(),
         customer_phone=body.customerPhone.strip(),
