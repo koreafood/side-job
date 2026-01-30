@@ -18,7 +18,6 @@ const form = reactive({
   name: '',
   description: '',
   priceJpy: 2000,
-  images: [{ url: '' }],
 })
 
 const canSubmit = computed(() => {
@@ -27,7 +26,7 @@ const canSubmit = computed(() => {
   if (!String(form.priceJpy).trim()) return false
   const price = Number(form.priceJpy)
   if (!Number.isFinite(price) || price < 0) return false
-  const hasAnyImage = form.images.some((it) => it.url.trim()) || localImages.value.length > 0
+  const hasAnyImage = localImages.value.length > 0
   return hasAnyImage
 })
 
@@ -47,15 +46,6 @@ function removeLocalImage(index: number) {
   if (!it) return
   URL.revokeObjectURL(it.previewUrl)
   localImages.value.splice(index, 1)
-}
-
-function addImageField() {
-  form.images.push({ url: '' })
-}
-
-function removeImageField(index: number) {
-  if (form.images.length <= 1) return
-  form.images.splice(index, 1)
 }
 
 async function loadSellers() {
@@ -78,14 +68,13 @@ async function submit() {
   status.value = 'submitting'
   error.value = null
   try {
-    const urlImages = form.images.map((it) => it.url.trim()).filter(Boolean)
     const uploaded = [] as string[]
     for (const it of localImages.value) {
       const res = await api.uploadAdminImage(it.file)
       uploaded.push(res.url)
     }
 
-    const images = [...uploaded, ...urlImages].map((url, i) => ({ url, sort: i + 1 }))
+    const images = uploaded.map((url, i) => ({ url, sort: i + 1 }))
 
     const created = await api.createAdminProduct({
       sellerId: form.sellerId,
@@ -116,7 +105,7 @@ onUnmounted(() => {
     <div>
       <h1 class="text-lg font-semibold">상품 등록</h1>
       <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        내 컴퓨터 사진 업로드 또는 사진 URL 여러 개를 등록할 수 있어요.
+        내 컴퓨터에서 사진을 업로드해 등록할 수 있어요.
       </p>
     </div>
 
@@ -200,38 +189,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="space-y-2">
-          <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-medium">사진 URL</div>
-            <button
-              type="button"
-              class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
-              @click="addImageField"
-            >
-              URL 추가
-            </button>
-          </div>
-
-          <div class="space-y-2">
-            <div v-for="(it, idx) in form.images" :key="idx" class="flex items-center gap-2">
-              <input
-                v-model="it.url"
-                type="url"
-                class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-                placeholder="https://..."
-              />
-              <button
-                type="button"
-                class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
-                :disabled="form.images.length <= 1"
-                @click="removeImageField(idx)"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div class="flex items-center justify-end gap-3 pt-2">
           <button
             type="submit"
@@ -253,13 +210,6 @@ onUnmounted(() => {
               class="aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
             >
               <img :src="it.previewUrl" alt="" class="h-full w-full object-cover" />
-            </div>
-            <div
-              v-for="(it, idx) in form.images"
-              :key="`prev_${idx}`"
-              class="aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <img v-if="it.url.trim()" :src="it.url" alt="" class="h-full w-full object-cover" />
             </div>
           </div>
         </div>
