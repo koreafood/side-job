@@ -20,6 +20,7 @@ class Product(SQLModel, table=True):
     seller_name: str
     name: str
     description: str
+    details_html: str = ""
     price_jpy: int
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

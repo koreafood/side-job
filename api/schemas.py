@@ -26,6 +26,7 @@ class ProductOut(BaseModel):
     sellerName: str
     name: str
     description: str
+    detailsHtml: str
     priceJpy: int
     images: list[ProductImageOut]
 
@@ -39,6 +40,7 @@ class ProductCreateIn(BaseModel):
     sellerId: str = Field(min_length=1, max_length=120)
     name: str = Field(min_length=1, max_length=120)
     description: str = Field(max_length=4000)
+    detailsHtml: str = Field(default="", max_length=20000)
     priceJpy: int = Field(ge=0, le=10_000_000)
     images: list[ProductImageCreateIn] = Field(min_length=1, max_length=20)
 

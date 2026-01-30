@@ -19,6 +19,7 @@ export type Product = {
   sellerName: string
   name: string
   description: string
+  detailsHtml: string
   priceJpy: number
   images: ProductImage[]
 }

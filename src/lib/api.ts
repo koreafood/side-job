@@ -70,6 +70,7 @@ export const api = {
     sellerId: string
     name: string
     description: string
+    detailsHtml?: string
     priceJpy: number
     images: { url: string; sort: number }[]
   }) =>
@@ -83,6 +84,7 @@ export const api = {
       sellerId: string
       name: string
       description: string
+      detailsHtml?: string
       priceJpy: number
       images: { url: string; sort: number }[]
     },

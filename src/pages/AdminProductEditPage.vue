@@ -3,6 +3,9 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import type { Product, Seller } from '@/lib/types'
+import { EditorContent, useEditor } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,6 +26,7 @@ const form = reactive({
   sellerId: '',
   name: '',
   description: '',
+  detailsHtml: '',
   priceJpy: 0,
 })
 
@@ -35,6 +39,35 @@ const canSubmit = computed(() => {
   return hasAnyImage
 })
 
+const editor = useEditor({
+  extensions: [StarterKit, Image],
+  content: '',
+  onUpdate: ({ editor }) => {
+    form.detailsHtml = editor.getHTML()
+  },
+})
+
+function setEditorContent(html: string) {
+  form.detailsHtml = html
+  editor?.value?.chain().setContent(html || '').run()
+}
+
+const detailImgInput = ref<HTMLInputElement | null>(null)
+
+async function onPickDetailImages(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue
+    const res = await api.uploadAdminImage(file)
+    editor?.value?.chain().focus().setImage({ src: res.url }).run()
+  }
+  input.value = ''
+}
+
+function triggerDetailImage() {
+  detailImgInput.value?.click()
+}
 function removeExistingImage(index: number) {
   existingImageUrls.value.splice(index, 1)
 }
@@ -67,6 +100,8 @@ async function load() {
     form.sellerId = p.sellerId
     form.name = p.name
     form.description = p.description
+    form.detailsHtml = p.detailsHtml || ''
+    setEditorContent(form.detailsHtml)
     form.priceJpy = p.priceJpy
     existingImageUrls.value = p.images.map((it) => it.url)
     status.value = 'ready'
@@ -93,6 +128,7 @@ async function submit() {
       sellerId: form.sellerId,
       name: form.name.trim(),
       description: form.description.trim(),
+      detailsHtml: form.detailsHtml,
       priceJpy: Number(form.priceJpy),
       images,
     })
@@ -194,6 +230,58 @@ onUnmounted(() => {
             class="w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
           />
         </label>
+
+        <div class="space-y-2">
+          <div class="text-sm font-medium">상세정보(리치 텍스트)</div>
+          <div class="rounded-2xl border border-zinc-200 bg-white p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div class="mb-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="editor?.chain().focus().toggleBold().run()"
+              >
+                Bold
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="editor?.chain().focus().toggleItalic().run()"
+              >
+                Italic
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="editor?.chain().focus().toggleBulletList().run()"
+              >
+                • List
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="editor?.chain().focus().setParagraph().run()"
+              >
+                Paragraph
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="triggerDetailImage"
+              >
+                Image
+              </button>
+              <input
+                ref="detailImgInput"
+                type="file"
+                accept="image/*"
+                multiple
+                class="sr-only"
+                @change="onPickDetailImages"
+              />
+            </div>
+            <EditorContent :editor="editor" />
+          </div>
+        </div>
 
         <div class="space-y-2">
           <div class="text-sm font-medium">내 컴퓨터 사진 추가</div>

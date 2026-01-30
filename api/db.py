@@ -57,6 +57,13 @@ def init_db() -> None:
         for stmt in alters:
             conn.execute(text(stmt))
 
+        pcols = conn.exec_driver_sql("PRAGMA table_info('product')").fetchall()
+        pexisting = {row[1] for row in pcols}
+        palters: list[str] = []
+        if "details_html" not in pexisting:
+            palters.append("ALTER TABLE \"product\" ADD COLUMN details_html TEXT")
+        for stmt in palters:
+            conn.execute(text(stmt))
 
 @contextmanager
 def get_session():

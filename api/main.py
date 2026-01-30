@@ -109,6 +109,7 @@ def _product_out(session: Session, p: Product) -> ProductOut:
         sellerName=p.seller_name,
         name=p.name,
         description=p.description,
+        detailsHtml=p.details_html or "",
         priceJpy=p.price_jpy,
         images=_product_images(session, p.id),
     )
@@ -345,6 +346,7 @@ def create_admin_product(body: ProductCreateIn, session: Session = Depends(get_s
         seller_name=seller.name,
         name=body.name,
         description=body.description,
+        details_html=body.detailsHtml,
         price_jpy=body.priceJpy,
     )
     session.add(p)
@@ -381,6 +383,7 @@ def update_admin_product(
     p.seller_name = seller.name
     p.name = body.name
     p.description = body.description
+    p.details_html = body.detailsHtml
     p.price_jpy = body.priceJpy
     session.add(p)
 

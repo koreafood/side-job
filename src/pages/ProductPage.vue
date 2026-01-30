@@ -114,6 +114,16 @@ onMounted(() => {
         <ImageGallery :images="product.images" :alt="product.name" />
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+          <div class="text-sm font-semibold">상세정보</div>
+          <div
+            v-if="product.detailsHtml && product.detailsHtml.trim()"
+            class="mt-4 text-sm leading-6"
+            v-html="product.detailsHtml"
+          />
+          <div v-else class="mt-4 text-sm text-zinc-600 dark:text-zinc-300">상세정보가 없어요.</div>
+        </div>
+
+        <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div class="text-sm font-semibold">구매자 리뷰</div>
           <div class="mt-4">
             <ReviewList :reviews="reviews" />

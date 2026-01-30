@@ -3,6 +3,9 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import type { Seller } from '@/lib/types'
+import { EditorContent, useEditor } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
 
 const router = useRouter()
 
@@ -17,6 +20,7 @@ const form = reactive({
   sellerId: '',
   name: '',
   description: '',
+  detailsHtml: '',
   priceJpy: 2000,
 })
 
@@ -48,6 +52,36 @@ function removeLocalImage(index: number) {
   localImages.value.splice(index, 1)
 }
 
+const editor = useEditor({
+  extensions: [StarterKit, Image],
+  content: '',
+  onUpdate: ({ editor }) => {
+    form.detailsHtml = editor.getHTML()
+  },
+})
+
+function setInitialDetails(html: string) {
+  form.detailsHtml = html
+  editor?.value?.chain().setContent(html || '').run()
+}
+
+const detailImgInput = ref<HTMLInputElement | null>(null)
+
+async function onPickDetailImages(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue
+    const res = await api.uploadAdminImage(file)
+    editor?.value?.chain().focus().setImage({ src: res.url }).run()
+  }
+  input.value = ''
+}
+
+function triggerDetailImage() {
+  detailImgInput.value?.click()
+}
+
 async function loadSellers() {
   status.value = 'loading'
   error.value = null
@@ -56,6 +90,7 @@ async function loadSellers() {
     if (!form.sellerId && sellers.value.length > 0) {
       form.sellerId = sellers.value[0].id
     }
+    setInitialDetails('')
     status.value = 'ready'
   } catch (e) {
     status.value = 'error'
@@ -80,6 +115,7 @@ async function submit() {
       sellerId: form.sellerId,
       name: form.name.trim(),
       description: form.description.trim(),
+      detailsHtml: form.detailsHtml,
       priceJpy: Number(form.priceJpy),
       images,
     })
@@ -161,6 +197,58 @@ onUnmounted(() => {
             placeholder="상품 설명을 입력해 주세요"
           />
         </label>
+
+        <div class="space-y-2">
+          <div class="text-sm font-medium">상세정보(리치 텍스트)</div>
+          <div class="rounded-2xl border border-zinc-200 bg-white p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div class="mb-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="editor?.chain().focus().toggleBold().run()"
+              >
+                Bold
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="editor?.chain().focus().toggleItalic().run()"
+              >
+                Italic
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="editor?.chain().focus().toggleBulletList().run()"
+              >
+                • List
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="editor?.chain().focus().setParagraph().run()"
+              >
+                Paragraph
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                @click="triggerDetailImage"
+              >
+                Image
+              </button>
+              <input
+                ref="detailImgInput"
+                type="file"
+                accept="image/*"
+                multiple
+                class="sr-only"
+                @change="onPickDetailImages"
+              />
+            </div>
+            <EditorContent :editor="editor" />
+          </div>
+        </div>
 
         <div class="space-y-2">
           <div class="text-sm font-medium">내 컴퓨터 사진</div>
