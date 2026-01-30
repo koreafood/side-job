@@ -1,0 +1,9 @@
+node_modules
+dist
+.npm-cache
+.DS_Store
+image
+
+api/app.db
+api/uploads
+api/__pycache__
