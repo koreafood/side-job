@@ -89,6 +89,8 @@ def init_db() -> None:
         palters: list[str] = []
         if "details_html" not in pexisting:
             palters.append("ALTER TABLE \"product\" ADD COLUMN details_html TEXT")
+        if "published" not in pexisting:
+            palters.append("ALTER TABLE \"product\" ADD COLUMN published INTEGER DEFAULT 1")
         for stmt in palters:
             conn.execute(text(stmt))
 

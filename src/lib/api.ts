@@ -165,6 +165,7 @@ export const api = {
     detailsHtml?: string
     priceJpy: number
     images: { url: string; sort: number }[]
+    published?: boolean
   }) =>
     apiFetch<Product>('/api/admin/products', {
       method: 'POST',
@@ -185,6 +186,7 @@ export const api = {
       detailsHtml?: string
       priceJpy: number
       images: { url: string; sort: number }[]
+      published?: boolean
     },
   ) =>
     apiFetch<Product>(`/api/admin/products/${encodeURIComponent(productId)}`, {
@@ -431,4 +433,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+
+  listAdminProducts: (params?: { published?: 'all' | 'true' | 'false' }) => {
+    const v = params?.published ?? 'all'
+    const qs = new URLSearchParams({ published: v }).toString()
+    return apiFetch<Product[]>(`/api/admin/products${qs ? `?${qs}` : ''}`)
+  },
 }

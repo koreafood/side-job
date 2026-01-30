@@ -41,6 +41,7 @@ class Product(SQLModel, table=True):
     description: str # 간단 설명
     details_html: str = "" # 상세 설명 (HTML 형식, Tiptap 에디터 작성)
     price_jpy: int # 가격 (엔화)
+    published: bool = True # 전시 여부 (공개 여부)
     created_at: datetime = Field(default_factory=datetime.utcnow) # 생성일시
 
 

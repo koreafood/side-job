@@ -21,6 +21,9 @@ from datetime import datetime, timedelta
 import os
 from pathlib import Path
 from uuid import uuid4
+import secrets
+import string
+import re
 
 from fastapi import Cookie, Depends, FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -83,6 +86,8 @@ else:
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
+API_ORIGIN = os.getenv("API_ORIGIN", "http://localhost:8000").rstrip("/")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -98,12 +103,134 @@ app.add_middleware(
 ADMIN_PASSWORD = "qazwsx12##"  # 단일 관리자 비밀번호(데모용, DB 없이 쿠키로 세션 유지)
 
 
+def _abs_url(path: str) -> str:
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    return f"{API_ORIGIN}{path}"
+
+def _abs_in_html(html: str) -> str:
+    if not html:
+        return ""
+    s = html
+    s = s.replace('src="/uploads/', f'src="{API_ORIGIN}/uploads/')
+    s = s.replace("src='/uploads/", f"src='{API_ORIGIN}/uploads/")
+    s = s.replace('href="/uploads/', f'href="{API_ORIGIN}/uploads/')
+    s = s.replace("href='/uploads/", f"href='{API_ORIGIN}/uploads/")
+    s = s.replace("url(/uploads/", f"url({API_ORIGIN}/uploads/")
+    s = s.replace("url('/uploads/", f"url('{API_ORIGIN}/uploads/")
+    s = s.replace('url("/uploads/', f'url("{API_ORIGIN}/uploads/')
+    return s
+
+def _rewrite_details_html(html: str, product_id: str) -> str:
+    if not html:
+        return ""
+    def _to_rel(path: str) -> str:
+        if path.startswith("http://") or path.startswith("https://"):
+            i = path.find("/uploads/")
+            if i >= 0:
+                return path[i:]
+            return path
+        return path
+    def _move_and_build(path: str) -> str:
+        rel = _to_rel(path)
+        if not rel.startswith("/uploads/"):
+            return path
+        parts = rel[len("/uploads/"):].split("/")
+        if len(parts) >= 3 and parts[0] == "products" and parts[2] == "images":
+            return _abs_url(rel)
+        src = UPLOAD_DIR / rel[len("/uploads/"):]
+        if not src.exists() or not src.is_file():
+            return _abs_url(rel)
+        dst_dir = _ensure_product_image_path(product_id)
+        dst = dst_dir / src.name
+        try:
+            if src.resolve() != dst.resolve():
+                src.replace(dst)
+            return _abs_url(f"/uploads/products/{product_id}/images/{dst.name}")
+        except Exception:
+            return _abs_url(rel)
+    def repl_attr(m: re.Match) -> str:
+        quote = m.group(1)
+        pre = m.group(2) or ""
+        path = m.group(3)
+        new = _move_and_build(pre + path)
+        return f'{quote}{new}{quote}'
+    s = re.sub(r'([\"\\\'])(https?://[^\"\\\']+)?(/uploads/[^\"\\\']+)[\"\\\']', repl_attr, html)
+    def repl_url(m: re.Match) -> str:
+        quote = m.group(1) or ""
+        pre = m.group(2) or ""
+        path = m.group(3)
+        new = _move_and_build(pre + path)
+        if quote:
+            return f'url({quote}{new}{quote})'
+        return f'url({new})'
+    s = re.sub(r'url\\(\\s*([\"\\\'])?(https?://[^\"\\\')]+)?(/uploads/[^\"\\\')]+)\\1?\\s*\\)', repl_url, s)
+    return s
+
+def _move_image_to_order(url: str, order_no: str) -> str:
+    idx = url.find("/uploads/")
+    if idx < 0:
+        return url
+    rel = url[idx + len("/uploads/"):]
+    parts = rel.split("/")
+    if len(parts) >= 3 and parts[0] == "orders" and parts[2] == "images":
+        return f"/uploads/{rel}"
+    src = UPLOAD_DIR / rel
+    if not src.exists() or not src.is_file():
+        return f"/uploads/{rel}"
+    dst_dir = _ensure_order_image_path(order_no)
+    dst = dst_dir / src.name
+    try:
+        if src.resolve() != dst.resolve():
+            src.replace(dst)
+        return f"/uploads/orders/{order_no}/images/{dst.name}"
+    except Exception:
+        return f"/uploads/{rel}"
+
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
     with get_session() as session:
         seed_if_empty(session)
 
+def _gen_product_id(session: Session) -> str:
+    while True:
+        now = datetime.utcnow()
+        ymd = f"{now.year:04d}{now.month:02d}{now.day:02d}"
+        rnd = "".join(secrets.choice(string.ascii_uppercase) for _ in range(2))
+        pid = f"{ymd}{rnd}"
+        if session.get(Product, pid) is None:
+            return pid
+
+def _ensure_product_image_path(product_id: str) -> Path:
+    d = UPLOAD_DIR / "products" / product_id / "images"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+def _ensure_order_image_path(order_no: str) -> Path:
+    d = UPLOAD_DIR / "orders" / order_no / "images"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+def _move_image_to_product(url: str, product_id: str) -> str:
+    idx = url.find("/uploads/")
+    if idx < 0:
+        return url
+    rel = url[idx + len("/uploads/"):]
+    parts = rel.split("/")
+    if len(parts) >= 3 and parts[0] == "products" and parts[2] == "images":
+        return _abs_url(f"/uploads/{rel}")
+    src = UPLOAD_DIR / rel
+    if not src.exists() or not src.is_file():
+        return _abs_url(f"/uploads/{rel}")
+    dst_dir = _ensure_product_image_path(product_id)
+    dst = dst_dir / src.name
+    try:
+        if src.resolve() != dst.resolve():
+            src.replace(dst)
+        return _abs_url(f"/uploads/products/{product_id}/images/{dst.name}")
+    except Exception:
+        return _abs_url(f"/uploads/{rel}")
 
 def _seller_out(s: Seller) -> SellerOut:
     return SellerOut(
@@ -120,7 +247,13 @@ def _product_images(session: Session, product_id: str) -> list[ProductImageOut]:
     rows = session.exec(
         select(ProductImage).where(ProductImage.product_id == product_id).order_by(ProductImage.sort)
     ).all()
-    return [ProductImageOut(id=r.id, url=r.url, sort=r.sort) for r in rows]
+    out: list[ProductImageOut] = []
+    for r in rows:
+        url = r.url
+        if isinstance(url, str) and url.startswith("/uploads/"):
+            url = _abs_url(url)
+        out.append(ProductImageOut(id=r.id, url=url, sort=r.sort))
+    return out
 
 
 def _product_out(session: Session, p: Product) -> ProductOut:
@@ -130,9 +263,10 @@ def _product_out(session: Session, p: Product) -> ProductOut:
         sellerName=p.seller_name,
         name=p.name,
         description=p.description,
-        detailsHtml=p.details_html or "",
+        detailsHtml=_abs_in_html(p.details_html or ""),
         priceJpy=p.price_jpy,
         images=_product_images(session, p.id),
+        published=p.published,
     )
 
 
@@ -261,7 +395,13 @@ def _production_step_photos(session: Session, step_id: str) -> list[ProductionSt
         .where(ProductionStepPhoto.step_id == step_id)
         .order_by(ProductionStepPhoto.sort.asc())
     ).all()
-    return [ProductionStepPhotoOut(id=r.id, url=r.url, sort=r.sort) for r in rows]
+    out: list[ProductionStepPhotoOut] = []
+    for r in rows:
+        url = r.url
+        if isinstance(url, str) and url.startswith("/uploads/"):
+            url = _abs_url(url)
+        out.append(ProductionStepPhotoOut(id=r.id, url=url, sort=r.sort))
+    return out
 
 
 def _production_steps(session: Session, order_id: str) -> list[ProductionStepOut]:
@@ -304,7 +444,7 @@ def upload_admin_image(file: UploadFile = File(...)) -> UploadOut:
         raise HTTPException(status_code=413, detail="이미지 용량은 8MB 이하만 가능해요.")
 
     dst.write_bytes(data)
-    return UploadOut(url=f"/uploads/{safe_name}", filename=safe_name, contentType=file.content_type)
+    return UploadOut(url=_abs_url(f"/uploads/{safe_name}"), filename=safe_name, contentType=file.content_type)
 
 
 @app.get("/api/sellers/{seller_id}", response_model=SellerOut)
@@ -330,6 +470,7 @@ def list_seller_products(
     rows = session.exec(
         select(Product)
         .where(Product.seller_id == seller_id)
+        .where(Product.published == True)
         .order_by(Product.created_at.desc())
         .limit(max(1, min(50, limit)))
     ).all()
@@ -337,12 +478,11 @@ def list_seller_products(
 
 
 @app.post("/api/admin/login", response_model=AdminSessionOut)
-def admin_login(body: AdminLoginIn) -> AdminSessionOut:
+def admin_login(body: AdminLoginIn, response: Response) -> AdminSessionOut:
     # 비밀번호가 일치하면 8시간 유효한 관리자 쿠키를 설정
     if body.password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="비밀번호가 올바르지 않아요.")
-    resp = Response()
-    resp.set_cookie(
+    response.set_cookie(
         key="is_admin",
         value="1",
         max_age=60 * 60 * 8,
@@ -364,18 +504,34 @@ def admin_session(is_admin: str | None = Cookie(default=None)) -> AdminSessionOu
 
 @app.get("/api/products", response_model=list[ProductOut])
 def list_products(query: str | None = None, session: Session = Depends(get_session_dep)) -> list[ProductOut]:
-    stmt = select(Product).order_by(Product.created_at.desc())
+    stmt = select(Product).where(Product.published == True).order_by(Product.created_at.desc())
     if query and query.strip():
         q = f"%{query.strip()}%"
         stmt = stmt.where(Product.name.like(q))
     rows = session.exec(stmt).all()
     return [_product_out(session, p) for p in rows]
 
+@app.get("/api/admin/products", response_model=list[ProductOut])
+def admin_list_products(
+    published: str | None = "all",
+    session: Session = Depends(get_session_dep),
+) -> list[ProductOut]:
+    stmt = select(Product).order_by(Product.created_at.desc())
+    v = (published or "all").strip().lower()
+    if v in ("true", "1", "yes", "on"):
+        stmt = stmt.where(Product.published == True)
+    elif v in ("false", "0", "no", "off"):
+        stmt = stmt.where(Product.published == False)
+    rows = session.exec(stmt).all()
+    return [_product_out(session, p) for p in rows]
+
 
 @app.get("/api/products/{product_id}", response_model=ProductOut)
-def get_product(product_id: str, session: Session = Depends(get_session_dep)) -> ProductOut:
+def get_product(product_id: str, session: Session = Depends(get_session_dep), is_admin: str | None = Cookie(default=None)) -> ProductOut:
     p = session.get(Product, product_id)
     if p is None:
+        raise HTTPException(status_code=404, detail="상품을 찾을 수 없어요.")
+    if not p.published and is_admin != "1":
         raise HTTPException(status_code=404, detail="상품을 찾을 수 없어요.")
     return _product_out(session, p)
 
@@ -386,25 +542,27 @@ def create_admin_product(body: ProductCreateIn, session: Session = Depends(get_s
     if seller is None:
         raise HTTPException(status_code=404, detail="판매자를 찾을 수 없어요.")
 
-    product_id = f"product_{uuid4().hex}"
+    product_id = _gen_product_id(session)
     p = Product(
         id=product_id,
         seller_id=seller.id,
         seller_name=seller.name,
         name=body.name,
         description=body.description,
-        details_html=body.detailsHtml,
+        details_html=_rewrite_details_html(body.detailsHtml, product_id),
         price_jpy=body.priceJpy,
+        published=body.published,
     )
     session.add(p)
 
     images = sorted(body.images, key=lambda it: it.sort)
     for i, it in enumerate(images, start=1):
+        final_url = _move_image_to_product(it.url, product_id)
         session.add(
             ProductImage(
                 id=f"img_{uuid4().hex}",
                 product_id=product_id,
-                url=it.url,
+                url=final_url,
                 sort=i,
             )
         )
@@ -430,8 +588,9 @@ def update_admin_product(
     p.seller_name = seller.name
     p.name = body.name
     p.description = body.description
-    p.details_html = body.detailsHtml
+    p.details_html = _rewrite_details_html(body.detailsHtml, product_id)
     p.price_jpy = body.priceJpy
+    p.published = body.published
     session.add(p)
 
     existing_imgs = session.exec(select(ProductImage).where(ProductImage.product_id == product_id)).all()
@@ -440,11 +599,12 @@ def update_admin_product(
 
     images = sorted(body.images, key=lambda it: it.sort)
     for i, it in enumerate(images, start=1):
+        final_url = _move_image_to_product(it.url, product_id)
         session.add(
             ProductImage(
                 id=f"img_{uuid4().hex}",
                 product_id=product_id,
-                url=it.url,
+                url=final_url,
                 sort=i,
             )
         )
@@ -1014,6 +1174,10 @@ def admin_add_step_photo(
     if step is None:
         raise HTTPException(status_code=404, detail="단계를 찾을 수 없어요.")
 
+    order = session.get(Order, step.order_id)
+    if order is None:
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없어요.")
+
     last = session.exec(
         select(func.max(ProductionStepPhoto.sort)).where(ProductionStepPhoto.step_id == step_id)
     ).one()
@@ -1021,7 +1185,7 @@ def admin_add_step_photo(
     photo = ProductionStepPhoto(
         id=f"psp_{uuid4().hex}",
         step_id=step_id,
-        url=body.url.strip(),
+        url=_abs_url(_move_image_to_order(body.url.strip(), order.order_no)),
         sort=next_sort,
         created_at=datetime.utcnow(),
     )

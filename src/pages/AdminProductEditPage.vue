@@ -49,6 +49,7 @@ const form = reactive({
   description: '',
   detailsHtml: '',
   priceJpy: 0,
+  published: true,
 })
 
 // 제출 가능 여부 계산
@@ -166,6 +167,7 @@ async function load() {
     form.detailsHtml = p.detailsHtml || ''
     setEditorContent(form.detailsHtml)
     form.priceJpy = p.priceJpy
+    form.published = p.published
     existingImageUrls.value = p.images.map((it) => it.url)
     coverUrl.value = existingImageUrls.value[0] ?? null
     status.value = 'ready'
@@ -209,8 +211,13 @@ async function submit() {
       detailsHtml: form.detailsHtml,
       priceJpy: Number(form.priceJpy),
       images,
+      published: form.published,
     })
-    await router.push({ name: 'product', params: { productId: updated.id } })
+    if (updated.published) {
+      await router.push({ name: 'product', params: { productId: updated.id } })
+    } else {
+      await router.push({ name: 'admin-product-edit', params: { productId: updated.id } })
+    }
   } catch (e) {
     status.value = 'ready'
     error.value = e instanceof Error ? e.message : '상품 수정에 실패했어요.'
@@ -346,6 +353,12 @@ onUnmounted(() => {
             rows="6"
             class="w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
           />
+        </label>
+
+
+        <label class="flex items-center gap-2">
+          <input type="checkbox" v-model="form.published" />
+          <span class="text-sm">전시 여부 (공개)</span>
         </label>
 
         <div class="space-y-2">

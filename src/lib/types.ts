@@ -38,6 +38,7 @@ export type Product = {
   detailsHtml: string
   priceJpy: number
   images: ProductImage[]
+  published: boolean
 }
 
 /**

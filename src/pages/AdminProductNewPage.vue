@@ -40,6 +40,7 @@ const form = reactive({
   description: '',
   detailsHtml: '',
   priceJpy: 2000,
+  published: true,
 })
 
 // 제출 가능 여부 계산
@@ -165,6 +166,7 @@ async function submit() {
       detailsHtml: form.detailsHtml,
       priceJpy: Number(form.priceJpy),
       images,
+      published: form.published,
     })
 
     // 3. 생성된 상품 페이지로 이동
@@ -297,6 +299,11 @@ onUnmounted(() => {
             <EditorContent :editor="editor" />
           </div>
         </div>
+
+        <label class="flex items-center gap-2">
+          <input type="checkbox" v-model="form.published" />
+          <span class="text-sm">전시 여부 (공개)</span>
+        </label>
 
         <div class="space-y-2">
           <div class="text-sm font-medium">내 컴퓨터 사진</div>

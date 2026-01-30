@@ -69,7 +69,7 @@ onMounted(() => {
         class="text-lg font-semibold tracking-tight"
         @click="$router.push({ name: 'home' })"
       >
-        LaLaLa
+        라라원단
       </button>
 
       <!-- 검색창 -->
@@ -113,15 +113,15 @@ onMounted(() => {
         <span class="hidden sm:inline">내 주문</span>
       </button>
 
-      <!-- 관리자용: 상품 등록 버튼 (로그인 시만 노출) -->
+      <!-- 관리자용: 상품목록 버튼 (로그인 시만 노출) -->
       <button
         type="button"
         class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
-        @click="$router.push({ name: 'admin-product-new' })"
+        @click="$router.push({ name: 'admin-products' })"
         v-if="admin.isAdmin.value"
       >
         <Plus class="h-4 w-4" />
-        <span class="hidden sm:inline">상품 등록</span>
+        <span class="hidden sm:inline">상품목록</span>
       </button>
 
       <!-- 관리자용: 주문 관리 버튼 (로그인 시만 노출) -->

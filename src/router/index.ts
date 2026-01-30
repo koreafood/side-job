@@ -11,6 +11,7 @@ import ProductPage from '@/pages/ProductPage.vue'
 import CartPage from '@/pages/CartPage.vue'
 import AdminProductNewPage from '@/pages/AdminProductNewPage.vue'
 import AdminProductEditPage from '@/pages/AdminProductEditPage.vue'
+import AdminProductsPage from '@/pages/AdminProductsPage.vue'
 import AdminOrdersPage from '@/pages/AdminOrdersPage.vue'
 import AdminOrderDetailPage from '@/pages/AdminOrderDetailPage.vue'
 import OrdersPage from '@/pages/OrdersPage.vue'
@@ -64,9 +65,21 @@ const routes = [
     meta: { requiresAdmin: true }, // 관리자 권한 필요
   },
   {
+    path: '/admin/products',
+    name: 'admin-products',
+    component: AdminProductsPage,
+    meta: { requiresAdmin: true },
+  },
+  {
     path: '/admin/products/:productId/edit',
     name: 'admin-product-edit',
     component: AdminProductEditPage, // 관리자 상품 수정 페이지
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: '/admin/product/:productId/edit',
+    name: 'admin-product-edit-alias',
+    component: AdminProductEditPage,
     meta: { requiresAdmin: true },
   },
   {
