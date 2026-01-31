@@ -212,7 +212,7 @@ export type PublicOrderDetail = {
   totalJpy: number
   orderStatus: AdminOrderStatus
   productionSteps: ProductionStep[]
-  items: { productId: string; productName: string; qty: number }[]
+  items: { productId: string; productName: string; qty: number; productImageUrl: string }[]
   customerMaskedName: string
 }
 

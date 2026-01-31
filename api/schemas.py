@@ -229,6 +229,7 @@ class PublicOrderItemOut(BaseModel):
     productId: str
     productName: str
     qty: int
+    productImageUrl: str
 
 
 class ProductOrderSummaryOut(BaseModel):

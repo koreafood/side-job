@@ -845,15 +845,14 @@ def create_order(
 
     now = datetime.utcnow()
     order_id = f"ord_{uuid4().hex}"
-    # 주문상세 번호: YYYYMMDD_일련번호(당일 기준 0001부터)
-    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    day_end = day_start + timedelta(days=1)
-    count_today = session.exec(
-        select(func.count()).select_from(Order).where(Order.ordered_at >= day_start).where(Order.ordered_at < day_end)
+    # 주문상세 번호: YYYY_일련번호(해당 연도 내 전체에서 001부터 연속 증가)
+    year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    next_year_start = year_start.replace(year=year_start.year + 1)
+    count_year = session.exec(
+        select(func.count()).select_from(Order).where(Order.ordered_at >= year_start).where(Order.ordered_at < next_year_start)
     ).one()
-    ymd = f"{now.year:04d}{now.month:02d}{now.day:02d}"
-    serial = int(count_today or 0) + 1
-    order_no_fmt = f"{ymd}_{serial:04d}"
+    serial = int(count_year or 0) + 1
+    order_no_fmt = f"{now.year:04d}_{serial:03d}"
     order = Order(
         id=order_id,
         order_no=order_no_fmt,
@@ -1049,6 +1048,9 @@ def public_get_order(order_id: str, session: Session = Depends(get_session_dep))
         raise HTTPException(status_code=404, detail="주문을 찾을 수 없어요.")
     _ensure_order_defaults(o)
     order_items = session.exec(select(OrderItem).where(OrderItem.order_id == order_id)).all()
+    def _first_img(pid: str) -> str:
+        imgs = _product_images(session, pid)
+        return imgs[0].url if imgs else ""
     return PublicOrderOut(
         id=o.id,
         orderNo=o.order_no,
@@ -1056,7 +1058,15 @@ def public_get_order(order_id: str, session: Session = Depends(get_session_dep))
         totalJpy=o.total_jpy,
         orderStatus=o.order_status,
         productionSteps=_production_steps(session, order_id),
-        items=[{"productId": it.product_id, "productName": it.product_name, "qty": it.qty} for it in order_items],
+        items=[
+            {
+                "productId": it.product_id,
+                "productName": it.product_name,
+                "qty": it.qty,
+                "productImageUrl": _first_img(it.product_id),
+            }
+            for it in order_items
+        ],
         customerMaskedName=_mask_korean_name(o.customer_name),
     )
 

@@ -110,6 +110,29 @@ onMounted(() => {
         </div>
       </div>
 
+      <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <div class="text-sm font-semibold">주문 상품</div>
+        <div class="mt-4 space-y-3">
+          <div
+            v-for="it in order.items"
+            :key="it.productId"
+            class="flex items-center gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+          >
+            <img
+              :src="it.productImageUrl || 'https://placehold.co/60x60?text=IMG'"
+              alt=""
+              class="h-14 w-14 rounded-md border border-zinc-200 object-cover dark:border-zinc-800"
+              @error="(e: Event) => ((e.target as HTMLImageElement).src = 'https://placehold.co/60x60?text=IMG')"
+            />
+            <div class="min-w-0 flex-1">
+              <div class="text-xs text-zinc-500 dark:text-zinc-400">상품코드</div>
+              <div class="font-semibold">{{ it.productId }}</div>
+              <div class="mt-1 text-sm">{{ it.productName }} (수량 {{ it.qty }})</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <ProductionStepsTimeline :steps="order.productionSteps" />
 
       <div
