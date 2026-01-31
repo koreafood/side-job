@@ -71,6 +71,8 @@ class ReviewCreateIn(BaseModel):
     authorName: str = Field(min_length=1, max_length=40)
     rating: int = Field(ge=1, le=5)
     body: str = Field(min_length=1, max_length=2000)
+    orderId: str = Field(min_length=1, max_length=200)
+    phoneLast4: str = Field(min_length=1, max_length=20)
 
 
 class CartItemOut(BaseModel):
@@ -95,6 +97,7 @@ class CartItemQtyIn(BaseModel):
 
 class OrderOut(BaseModel):
     id: str
+    orderNo: str
     totalJpy: int
     createdAt: datetime
 
@@ -219,6 +222,13 @@ class PublicOrderOut(BaseModel):
     totalJpy: int
     orderStatus: str
     productionSteps: list[ProductionStepOut]
+    items: list[PublicOrderItemOut]
+    customerMaskedName: str
+
+class PublicOrderItemOut(BaseModel):
+    productId: str
+    productName: str
+    qty: int
 
 
 class ProductOrderSummaryOut(BaseModel):

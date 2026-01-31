@@ -49,12 +49,13 @@ async function placeOrder() {
   orderId.value = null
   formError.value = null
 
-  if (!form.customerName.trim()) {
-    formError.value = '주문자를 입력해 주세요.'
+  if (form.customerName.trim().length < 2) {
+    formError.value = '주문자는 2자 이상 입력해 주세요.'
     return
   }
-  if (!form.customerPhone.trim()) {
-    formError.value = '연락처를 입력해 주세요.'
+  const phone = form.customerPhone.trim()
+  if (!/^\d{3}-\d{4}-\d{4}$/.test(phone)) {
+    formError.value = '연락처는 ###-####-#### 형식으로 입력해 주세요.'
     return
   }
   if (!form.shippingAddress.trim()) {
@@ -74,7 +75,7 @@ async function placeOrder() {
     shippingMemo: form.shippingMemo,
   })
   if (order) {
-    orderMessage.value = `주문이 생성됐어요. 주문번호: ${order.id} (총액 ${money(order.totalJpy)})`
+    orderMessage.value = `주문이 생성됐어요. 주문번호: ${order.orderNo} (총액 ${money(order.totalJpy)})`
     orderId.value = order.id
     try {
       // 로컬 스토리지에 내 주문 ID 목록 업데이트 (최대 50개)
@@ -210,11 +211,20 @@ onMounted(() => {
 
             <label class="space-y-1">
               <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">수령자</div>
-              <input
-                v-model="form.recipientName"
-                type="text"
-                class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-              />
+              <div class="flex gap-2">
+                <input
+                  v-model="form.recipientName"
+                  type="text"
+                  class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
+                />
+                <button
+                  type="button"
+                  class="whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                  @click="form.recipientName = form.customerName"
+                >
+                  주문자복사
+                </button>
+              </div>
             </label>
 
             <label class="space-y-1">

@@ -121,6 +121,25 @@ def _abs_in_html(html: str) -> str:
     s = s.replace('url("/uploads/', f'url("{API_ORIGIN}/uploads/')
     return s
 
+def _mask_korean_name(name: str) -> str:
+    s = (name or "").strip()
+    if not s:
+        return ""
+    n = len(s)
+    def is_korean(ch: str) -> bool:
+        return "\uAC00" <= ch <= "\uD7A3"
+    if all(is_korean(ch) for ch in s if ch != " "):
+        if n == 1:
+            return s[0] + "*"
+        if n == 2:
+            return s[0] + "*"
+        return s[0] + ("*" * (n - 2)) + s[-1]
+    if n == 1:
+        return s[0] + "*"
+    if n == 2:
+        return s[0] + "*"
+    return s[0] + ("*" * (n - 2)) + s[-1]
+
 def _rewrite_details_html(html: str, product_id: str) -> str:
     if not html:
         return ""
@@ -663,6 +682,22 @@ def create_review(
 ) -> ReviewOut:
     if session.get(Product, product_id) is None:
         raise HTTPException(status_code=404, detail="상품을 찾을 수 없어요.")
+    o = session.get(Order, body.orderId)
+    if o is None:
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없어요.")
+    if o.order_status != "delivered":
+        raise HTTPException(status_code=400, detail="배송 완료 후에만 리뷰를 작성할 수 있어요.")
+    item = session.exec(
+        select(OrderItem).where((OrderItem.order_id == body.orderId) & (OrderItem.product_id == product_id))
+    ).first()
+    if item is None:
+        raise HTTPException(status_code=400, detail="해당 주문에 이 상품이 없어요.")
+    def last4(v: str) -> str:
+        d = "".join(ch for ch in v if ch.isdigit())
+        return d[-4:] if len(d) >= 4 else d
+    ph4 = last4(body.phoneLast4.strip())
+    if ph4 != last4(o.customer_phone) and ph4 != last4(o.recipient_phone):
+        raise HTTPException(status_code=401, detail="전화번호 인증에 실패했어요.")
 
     r = Review(
         id=f"rev_{uuid4().hex}",
@@ -769,6 +804,18 @@ def create_order(
     cart_id: str | None = Cookie(default=None),
     session: Session = Depends(get_session_dep),
 ) -> OrderOut:
+    name = body.customerName.strip()
+    phone = body.customerPhone.strip()
+    addr = body.shippingAddress.strip()
+    rec = body.recipientName.strip()
+    if len(name) < 2:
+        raise HTTPException(status_code=400, detail="주문자는 2자 이상 입력해 주세요.")
+    if not re.fullmatch(r"\d{3}-\d{4}-\d{4}", phone):
+        raise HTTPException(status_code=400, detail="연락처는 ###-####-#### 형식으로 입력해 주세요.")
+    if not addr:
+        raise HTTPException(status_code=400, detail="배송주소를 입력해 주세요.")
+    if not rec:
+        raise HTTPException(status_code=400, detail="수령자를 입력해 주세요.")
     cart = _ensure_cart(session, response, cart_id)
     items = session.exec(select(CartItem).where(CartItem.cart_id == cart.id)).all()
     if len(items) == 0:
@@ -837,7 +884,7 @@ def create_order(
     session.commit()
     session.refresh(order)
 
-    return OrderOut(id=order.id, totalJpy=order.total_jpy, createdAt=order.created_at)
+    return OrderOut(id=order.id, orderNo=order.order_no, totalJpy=order.total_jpy, createdAt=order.created_at)
 
 
 @app.get("/api/admin/orders", response_model=AdminOrderListOut)
@@ -1001,6 +1048,7 @@ def public_get_order(order_id: str, session: Session = Depends(get_session_dep))
     if o is None:
         raise HTTPException(status_code=404, detail="주문을 찾을 수 없어요.")
     _ensure_order_defaults(o)
+    order_items = session.exec(select(OrderItem).where(OrderItem.order_id == order_id)).all()
     return PublicOrderOut(
         id=o.id,
         orderNo=o.order_no,
@@ -1008,6 +1056,8 @@ def public_get_order(order_id: str, session: Session = Depends(get_session_dep))
         totalJpy=o.total_jpy,
         orderStatus=o.order_status,
         productionSteps=_production_steps(session, order_id),
+        items=[{"productId": it.product_id, "productName": it.product_name, "qty": it.qty} for it in order_items],
+        customerMaskedName=_mask_korean_name(o.customer_name),
     )
 
 

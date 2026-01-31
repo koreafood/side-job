@@ -9,12 +9,13 @@ import { ref } from 'vue'
 import { api } from '@/lib/api'
 import type { Review } from '@/lib/types'
 
-const props = defineProps<{ productId: string }>()
+const props = defineProps<{ productId: string; orderId: string }>()
 const emit = defineEmits<{ created: [review: Review] }>()
 
 const authorName = ref('')
 const rating = ref(5)
 const body = ref('')
+const phoneLast4 = ref('')
 const status = ref<'idle' | 'saving' | 'error'>('idle')
 const error = ref<string | null>(null)
 
@@ -34,6 +35,12 @@ const error = ref<string | null>(null)
 async function submit() {
   const name = authorName.value.trim()
   const text = body.value.trim()
+  const digits = phoneLast4.value.replace(/\D+/g, '')
+  if (digits.length < 4) {
+    status.value = 'error'
+    error.value = '전화번호 마지막 4자리를 정확히 입력해 주세요.'
+    return
+  }
   if (!name || !text) {
     status.value = 'error'
     error.value = '닉네임과 리뷰 내용을 입력해 주세요.'
@@ -46,12 +53,15 @@ async function submit() {
       authorName: name,
       rating: rating.value,
       body: text,
+      orderId: props.orderId,
+      phoneLast4: digits,
     })
     emit('created', created)
     // 폼 초기화
     authorName.value = ''
     rating.value = 5
     body.value = ''
+    phoneLast4.value = ''
     status.value = 'idle'
   } catch (e) {
     status.value = 'error'
@@ -91,6 +101,15 @@ async function submit() {
         rows="4"
         class="w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm leading-6 outline-none ring-emerald-500/30 focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
         placeholder="상품이 어땠는지 적어 주세요"
+      />
+    </div>
+    <div class="space-y-1">
+      <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">전화번호 인증</div>
+      <input
+        v-model="phoneLast4"
+        maxlength="4"
+        class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
+        placeholder="전화번호 마지막 4자리"
       />
     </div>
     

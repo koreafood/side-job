@@ -176,7 +176,7 @@ onMounted(() => {
             <tr v-for="r in rows" :key="r.id" class="transition hover:bg-zinc-50 dark:hover:bg-zinc-900/40">
               <td class="px-4 py-3 font-semibold">
                 <button type="button" class="underline decoration-zinc-300 underline-offset-2" @click="go(r.id)">
-                  {{ r.id }}
+                  {{ r.detail ? r.detail.orderNo : r.id }}
                 </button>
                 <div v-if="r.error" class="mt-1 text-xs text-rose-600">{{ r.error }}</div>
               </td>
@@ -205,4 +205,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-

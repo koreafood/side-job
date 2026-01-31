@@ -12,6 +12,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import type { PublicOrderDetail } from '@/lib/types'
 import ProductionStepsTimeline from '@/components/ProductionStepsTimeline.vue'
+import ReviewForm from '@/components/ReviewForm.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,6 +22,7 @@ const orderId = computed(() => String(route.params.orderId))
 const status = ref<'idle' | 'loading' | 'error' | 'ready'>('idle')
 const error = ref<string | null>(null)
 const order = ref<PublicOrderDetail | null>(null)
+const selectedProductId = ref<string>('')
 
 function money(v: number) {
   return `¥${v.toLocaleString()}`
@@ -54,6 +56,7 @@ async function load() {
   error.value = null
   try {
     order.value = await api.getPublicOrder(orderId.value)
+    selectedProductId.value = order.value.items?.[0]?.productId ?? ''
     status.value = 'ready'
   } catch (e) {
     status.value = 'error'
@@ -96,6 +99,7 @@ onMounted(() => {
             <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">주문상세 번호</div>
             <div class="mt-1 text-lg font-semibold tracking-tight">{{ order.orderNo }}</div>
             <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{{ formatDate(order.orderedAt) }}</div>
+            <div class="mt-1 text-sm text-zinc-700 dark:text-zinc-200">주문자: {{ order.customerMaskedName }}</div>
           </div>
           <div class="text-right">
             <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">상태</div>
@@ -107,6 +111,26 @@ onMounted(() => {
       </div>
 
       <ProductionStepsTimeline :steps="order.productionSteps" />
+
+      <div
+        v-if="order.orderStatus === 'delivered' && (order.items?.length ?? 0) > 0"
+        class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+      >
+        <div class="text-sm font-semibold">구매자 리뷰 작성</div>
+        <div class="mt-3 flex items-center gap-2">
+          <select
+            v-model="selectedProductId"
+            class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
+          >
+            <option v-for="it in order.items" :key="it.productId" :value="it.productId">
+              {{ it.productName }}
+            </option>
+          </select>
+        </div>
+        <div class="mt-4" v-if="selectedProductId">
+          <ReviewForm :product-id="selectedProductId" :order-id="order.id" />
+        </div>
+      </div>
     </div>
 
     <div v-else class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
@@ -114,4 +138,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-

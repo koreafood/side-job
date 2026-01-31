@@ -143,12 +143,6 @@ onMounted(() => {
           <div class="mt-4">
             <ReviewList :reviews="reviews" />
           </div>
-          <div class="mt-5 border-t border-zinc-200 pt-5 dark:border-zinc-800">
-            <ReviewForm
-              :product-id="product.id"
-              @created="onReviewCreated"
-            />
-          </div>
         </div>
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
@@ -183,7 +177,7 @@ onMounted(() => {
                         class="underline decoration-zinc-300 underline-offset-2"
                         @click="goOrder(o.id)"
                       >
-                        {{ o.id }}
+                        {{ o.orderNo }}
                       </button>
                     </td>
                     <td class="px-4 py-3 text-zinc-700 dark:text-zinc-200">

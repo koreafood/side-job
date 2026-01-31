@@ -82,6 +82,7 @@ export type Cart = {
  */
 export type Order = {
   id: string
+  orderNo: string
   totalJpy: number
   createdAt: string
 }
@@ -211,6 +212,8 @@ export type PublicOrderDetail = {
   totalJpy: number
   orderStatus: AdminOrderStatus
   productionSteps: ProductionStep[]
+  items: { productId: string; productName: string; qty: number }[]
+  customerMaskedName: string
 }
 
 /**

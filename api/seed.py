@@ -45,8 +45,8 @@ def seed_if_empty(session: Session) -> None:
     # 판매자 데이터 생성
     seller = Seller(
         id=SELLER_ID,
-        name="90세의 바느질",
-        bio="안녕하세요.\n90세의 바느질입니다.\n\n젊은 시절부터 손바느질과 미싱으로 많은 작품을 만들어 왔어요.\n해마다 무늬를 바꿔서 스커트를 내고 있으니, 마음에 드는 무늬가 있으면 구경해 주세요.",
+        name="주니의 바느질",
+        bio="안녕하세요.\주니의 바느질입니다.\n\n젊은 시절부터 손바느질과 미싱으로 많은 작품을 만들어 왔어요.\n해마다 무늬를 바꿔서 자수작품을 내고 있으니, 마음에 드는 무늬가 있으면 구경해 주세요.",
         avatar_url=SELLER_AVATAR,
         rating_avg=5.0,
         rating_count=2,

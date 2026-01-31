@@ -375,7 +375,10 @@ export const api = {
    * - 입력: productId, 리뷰 내용
    * - 반환: Review
    */
-  createReview: (productId: string, input: { authorName: string; rating: number; body: string }) =>
+  createReview: (
+    productId: string,
+    input: { authorName: string; rating: number; body: string; orderId: string; phoneLast4: string },
+  ) =>
     apiFetch<Review>(`/api/products/${encodeURIComponent(productId)}/reviews`, {
       method: 'POST',
       body: JSON.stringify(input),
