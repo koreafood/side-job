@@ -1,0 +1,16 @@
+[Unit]
+Description=Lalawon FastAPI Service
+After=network.target
+
+[Service]
+User=ubuntu
+Group=users
+WorkingDirectory=/srv/lalawon/app
+Environment=API_ORIGIN=https://home.lala.dedyn.io
+ExecStart=/srv/lalawon/app/.venv/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8001 --workers 2
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+
