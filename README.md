@@ -75,7 +75,137 @@ graph TD
 
 ---
 
-## 3. 모듈 간 상호작용 및 데이터 흐름 (Data Flow)
+## 3. 데이터베이스 테이블 구조 (DB Tables)
+
+테이블은 [models.py](file:///Users/woozooni/Documents/trae_projects/side_job/api/models.py)에서 SQLModel 기반으로 정의됩니다.
+
+### 3.1. 관계 요약
+*   Seller 1:N Product
+*   Product 1:N ProductImage, Review
+*   Cart 1:N CartItem
+*   Order 1:N OrderItem, OrderStatusHistory, ProductionStep
+*   ProductionStep 1:N ProductionStepPhoto
+
+### 3.2. 테이블 상세
+
+#### Seller
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 판매자 ID |
+| name | str | 판매자 이름 |
+| bio | str | 소개글 |
+| avatar_url | str | 프로필 이미지 URL |
+| rating_avg | float | 평균 평점 |
+| rating_count | int | 평점 개수 |
+
+#### Product
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 상품 ID |
+| seller_id | str | 판매자 ID |
+| seller_name | str | 판매자 이름(역정규화) |
+| name | str | 상품명 |
+| description | str | 간단 설명 |
+| details_html | str | 상세 설명(HTML) |
+| price_jpy | int | 가격(엔화) |
+| published | bool | 전시 여부 |
+| created_at | datetime | 생성일시 |
+
+#### ProductImage
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 이미지 ID |
+| product_id | str | 상품 ID |
+| url | str | 이미지 URL |
+| sort | int | 정렬 순서 |
+
+#### Review
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 리뷰 ID |
+| product_id | str | 상품 ID |
+| author_name | str | 작성자 이름 |
+| rating | int | 평점(1~5) |
+| body | str | 리뷰 내용 |
+| created_at | datetime | 작성일시 |
+
+#### Cart
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 장바구니 ID(UUID) |
+| created_at | datetime | 생성일시 |
+
+#### CartItem
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 아이템 ID |
+| cart_id | str | 장바구니 ID |
+| product_id | str | 상품 ID |
+| qty | int | 수량 |
+
+#### Order
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 주문 ID(UUID) |
+| order_no | str | 주문 번호(YYYYMMDD_SERIAL) |
+| ordered_at | datetime | 주문 일시 |
+| customer_name | str | 주문자 이름 |
+| customer_phone | str | 주문자 연락처 |
+| recipient_name | str | 수령자 이름 |
+| recipient_phone | str | 수령자 연락처 |
+| shipping_address1 | str | 기본 주소 |
+| shipping_address2 | str | 상세 주소 |
+| shipping_memo | str | 배송 메모 |
+| order_status | str | 주문 상태 |
+| payment_status | str | 결제 상태 |
+| shipping_status | str | 배송 상태 |
+| total_jpy | int | 총 주문 금액(엔화) |
+| created_at | datetime | 레코드 생성일시 |
+| updated_at | datetime | 레코드 수정일시 |
+
+#### OrderItem
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 아이템 ID |
+| order_id | str | 주문 ID |
+| product_id | str | 상품 ID |
+| product_name | str | 상품명 스냅샷 |
+| unit_price_jpy | int | 단가 스냅샷 |
+| qty | int | 수량 |
+
+#### OrderStatusHistory
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 이력 ID |
+| order_id | str | 주문 ID |
+| prev_status | str | 이전 상태 |
+| next_status | str | 변경 상태 |
+| reason | str | 변경 사유 |
+| changed_by | str | 변경자 |
+| changed_at | datetime | 변경 일시 |
+
+#### ProductionStep
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 단계 ID |
+| order_id | str | 주문 ID |
+| step_index | int | 단계 순서 |
+| memo | str | 단계 메모 |
+| created_at | datetime | 생성일시 |
+| updated_at | datetime | 수정일시 |
+
+#### ProductionStepPhoto
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | str | 사진 ID |
+| step_id | str | 제작 단계 ID |
+| url | str | 사진 URL |
+| sort | int | 정렬 순서 |
+| created_at | datetime | 생성일시 |
+
+---
+
+## 4. 모듈 간 상호작용 및 데이터 흐름 (Data Flow)
 
 ### 3.1. 상품 구매 프로세스
 1.  **상품 목록**: 사용자가 메인 페이지에 접속하면 `HomePage`가 `api.listProducts()`를 호출하여 상품 목록을 가져옵니다.
@@ -94,7 +224,7 @@ graph TD
 
 ---
 
-## 4. 외부 라이브러리 의존성 (Dependencies)
+## 5. 외부 라이브러리 의존성 (Dependencies)
 
 ### Backend (Python)
 *   **FastAPI**: 비동기 처리를 지원하는 고성능 웹 프레임워크
@@ -113,7 +243,7 @@ graph TD
 
 ---
 
-## 5. 빌드 및 실행 방법 (Build & Run)
+## 6. 빌드 및 실행 방법 (Build & Run)
 
 이 프로젝트는 프론트엔드와 백엔드가 하나의 저장소에 있으며, 개발 편의를 위해 동시에 실행할 수 있습니다.
 
@@ -148,7 +278,7 @@ graph TD
 
 ---
 
-## 6. 테스트 (Test)
+## 7. 테스트 (Test)
 ```bash
 # Frontend 유닛 테스트 및 API 클라이언트 테스트 실행
 npm run test
