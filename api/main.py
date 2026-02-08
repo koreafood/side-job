@@ -143,43 +143,54 @@ def _mask_korean_name(name: str) -> str:
 def _rewrite_details_html(html: str, product_id: str) -> str:
     if not html:
         return ""
+    # 절대 URL을 /uploads/ 이하의 상대 경로로 변환하여 처리 대상으로 만듦
     def _to_rel(path: str) -> str:
         if path.startswith("http://") or path.startswith("https://"):
             i = path.find("/uploads/")
             if i >= 0:
-                return path[i:]
-            return path
-        return path
+                return path[i:]  # 절대 URL 중 /uploads/ 이하만 추출
+            return path         # /uploads/가 없으면 원본 유지
+        return path             # 이미 상대 경로면 그대로 반환
+    # /uploads/ 경로를 상품별 저장소로 이동하고 API_ORIGIN을 붙인 절대 URL로 반환
     def _move_and_build(path: str) -> str:
-        rel = _to_rel(path)
+        rel = _to_rel(path)  # 입력 경로를 처리 대상 상대 경로로 정규화
         if not rel.startswith("/uploads/"):
-            return path
+            return path      # 업로드 경로가 아니면 이동하지 않음
         parts = rel[len("/uploads/"):].split("/")
+        # 이미 /uploads/products/{product_id}/images/* 형태면 그대로 절대 URL로 변환만 함
         if len(parts) >= 3 and parts[0] == "products" and parts[2] == "images":
             return _abs_url(rel)
+        # 원본 업로드 파일 실제 위치
         src = UPLOAD_DIR / rel[len("/uploads/"):]
+        # 원본이 없으면 그대로 절대 URL로만 변환
         if not src.exists() or not src.is_file():
             return _abs_url(rel)
+        # 상품 전용 이미지 디렉터리 준비
         dst_dir = _ensure_product_image_path(product_id)
         dst = dst_dir / src.name
         try:
+            # 동일 파일이 아니면 이동(이동 후 원본 삭제)
             if src.resolve() != dst.resolve():
                 src.replace(dst)
+            # 이동한 파일을 상품 이미지 절대 URL로 반환
             return _abs_url(f"/uploads/products/{product_id}/images/{dst.name}")
         except Exception:
+            # 이동 실패 시 원본 상대 경로에 API_ORIGIN만 붙여서 반환
             return _abs_url(rel)
+    # HTML 태그 속성(src, href 등)에 등장하는 /uploads/* 경로를 이동 후 절대 URL로 치환
     def repl_attr(m: re.Match) -> str:
-        quote = m.group(1)
-        pre = m.group(2) or ""
-        path = m.group(3)
-        new = _move_and_build(pre + path)
+        quote = m.group(1)       # 따옴표 종류(" 또는 ')
+        pre = m.group(2) or ""   # http(s):// 부분(없을 수도 있음)
+        path = m.group(3)        # /uploads/ 이하 상대 경로
+        new = _move_and_build(pre + path)  # 이동 후 절대 URL 생성
         return f'{quote}{new}{quote}'
     s = re.sub(r'([\"\\\'])(https?://[^\"\\\']+)?(/uploads/[^\"\\\']+)[\"\\\']', repl_attr, html)
+    # CSS url(...)에 등장하는 /uploads/* 경로를 이동 후 절대 URL로 치환
     def repl_url(m: re.Match) -> str:
-        quote = m.group(1) or ""
-        pre = m.group(2) or ""
-        path = m.group(3)
-        new = _move_and_build(pre + path)
+        quote = m.group(1) or "" # 따옴표 유무
+        pre = m.group(2) or ""   # http(s):// 부분(없을 수도 있음)
+        path = m.group(3)        # /uploads/ 이하 상대 경로
+        new = _move_and_build(pre + path)  # 이동 후 절대 URL 생성
         if quote:
             return f'url({quote}{new}{quote})'
         return f'url({new})'
@@ -290,22 +301,24 @@ def _product_out(session: Session, p: Product) -> ProductOut:
 
 
 def _ensure_cart(session: Session, response: Response, cart_id: str | None) -> Cart:
+    # 쿠키로 전달된 cart_id가 있으면 해당 장바구니를 우선 조회
     if cart_id:
         cart = session.get(Cart, cart_id)
         if cart is not None:
             return cart
 
+    # 없거나 무효한 경우 새 장바구니를 생성하고 쿠키로 cart_id를 내려줌
     new_id = f"cart_{uuid4().hex}"
     cart = Cart(id=new_id)
     session.add(cart)
     session.commit()
     response.set_cookie(
-        key="cart_id",
-        value=new_id,
-        max_age=60 * 60 * 24 * 30,
-        httponly=True,
-        samesite="lax",
-        secure=os.getenv("VERCEL") == "1",
+        key="cart_id",                # 쿠키 키
+        value=new_id,                 # 새 장바구니 ID
+        max_age=60 * 60 * 24 * 30,    # 30일 유효
+        httponly=True,                # 자바스크립트 접근 불가
+        samesite="lax",               # 크로스 사이트 전송 제한 완화
+        secure=os.getenv("VERCEL") == "1",  # 배포 환경에서는 secure 쿠키 사용
     )
     return cart
 
@@ -804,10 +817,12 @@ def create_order(
     cart_id: str | None = Cookie(default=None),
     session: Session = Depends(get_session_dep),
 ) -> OrderOut:
+    # 입력값 정리
     name = body.customerName.strip()
     phone = body.customerPhone.strip()
     addr = body.shippingAddress.strip()
     rec = body.recipientName.strip()
+    # 필수 값 검증
     if len(name) < 2:
         raise HTTPException(status_code=400, detail="주문자는 2자 이상 입력해 주세요.")
     if not re.fullmatch(r"\d{3}-\d{4}-\d{4}", phone):
@@ -816,15 +831,18 @@ def create_order(
         raise HTTPException(status_code=400, detail="배송주소를 입력해 주세요.")
     if not rec:
         raise HTTPException(status_code=400, detail="수령자를 입력해 주세요.")
+    # 장바구니 확보(없으면 생성) 및 항목 조회
     cart = _ensure_cart(session, response, cart_id)
     items = session.exec(select(CartItem).where(CartItem.cart_id == cart.id)).all()
     if len(items) == 0:
         raise HTTPException(status_code=400, detail="장바구니가 비어 있어요.")
 
+    # 상품 정보 일괄 조회 및 매핑
     product_ids = [it.product_id for it in items]
     products = session.exec(select(Product).where(Product.id.in_(product_ids))).all()
     product_map = {p.id: p for p in products}
 
+    # 총액 계산 및 주문 아이템 구성
     total = 0
     order_items: list[OrderItem] = []
     for it in items:
@@ -834,8 +852,8 @@ def create_order(
         total += it.qty * p.price_jpy
         order_items.append(
             OrderItem(
-                id=f"oi_{uuid4().hex}",
-                order_id="",
+                id=f"oi_{uuid4().hex}",  # 주문 아이템 고유 ID
+                order_id="",            # 생성 후 주문 ID로 채움
                 product_id=p.id,
                 product_name=p.name,
                 unit_price_jpy=p.price_jpy,
@@ -843,16 +861,21 @@ def create_order(
             )
         )
 
+    # 주문 메타 생성
     now = datetime.utcnow()
     order_id = f"ord_{uuid4().hex}"
     # 주문상세 번호: YYYY_일련번호(해당 연도 내 전체에서 001부터 연속 증가)
     year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     next_year_start = year_start.replace(year=year_start.year + 1)
     count_year = session.exec(
-        select(func.count()).select_from(Order).where(Order.ordered_at >= year_start).where(Order.ordered_at < next_year_start)
+        select(func.count())
+        .select_from(Order)
+        .where(Order.ordered_at >= year_start)
+        .where(Order.ordered_at < next_year_start)
     ).one()
     serial = int(count_year or 0) + 1
     order_no_fmt = f"{now.year:04d}_{serial:03d}"
+    # 주문 레코드 구성
     order = Order(
         id=order_id,
         order_no=order_no_fmt,
@@ -871,18 +894,22 @@ def create_order(
         created_at=now,
         updated_at=now,
     )
+    # 주문 저장
     session.add(order)
     session.commit()
 
+    # 주문 아이템 저장(주문 ID 연결)
     for oi in order_items:
         oi.order_id = order_id
         session.add(oi)
 
+    # 장바구니 비우기 및 최신 주문 조회
     for it in items:
         session.delete(it)
     session.commit()
     session.refresh(order)
 
+    # 클라이언트 응답용 요약 정보 반환
     return OrderOut(id=order.id, orderNo=order.order_no, totalJpy=order.total_jpy, createdAt=order.created_at)
 
 
