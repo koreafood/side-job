@@ -1,0 +1,11 @@
+[Unit]
+Description=Lalawon Backup Service
+After=network.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=users
+WorkingDirectory=/srv/lalawon/app
+ExecStart=/srv/lalawon/app/scripts/lalawon-api-backup.sh
+

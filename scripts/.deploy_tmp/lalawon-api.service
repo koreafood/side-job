@@ -6,7 +6,7 @@ After=network.target
 User=ubuntu
 Group=users
 WorkingDirectory=/srv/lalawon/app
-Environment=API_ORIGIN=https://home.lala.dedyn.io
+Environment=API_ORIGIN=http://home.lala.dedyn.io
 ExecStart=/srv/lalawon/app/.venv/bin/python -m uvicorn api.main:app --host 127.0.0.1 --port 8001 --workers 2
 Restart=always
 RestartSec=3

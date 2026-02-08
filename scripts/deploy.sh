@@ -14,6 +14,11 @@ ENABLE_SSL="${ENABLE_SSL:-false}" # HTTPS 설정 활성화 여부 기본값
 CERTBOT_EMAIL="${CERTBOT_EMAIL:-you@example.com}" # certbot 등록 이메일 기본값
 SUDO_PASS="${SUDO_PASS:-}" # 원격 sudo 비밀번호(선택)
 SSH_PASS="${SSH_PASS:-}" # SSH 비밀번호(선택)
+ENABLE_BACKUP="${ENABLE_BACKUP:-true}"
+BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
+BACKUP_TIME="${BACKUP_TIME:-03:00}"
+BACKUP_DIR="${BACKUP_DIR:-${REMOTE_PATH}/backups}"
+BACKUP_SERVICE_NAME="${BACKUP_SERVICE_NAME:-${SERVICE_NAME}-backup}"
 
 while [[ $# -gt 0 ]]; do # CLI 인자를 모두 소진할 때까지 반복
   case "$1" in # 현재 인자 키를 기반으로 분기
@@ -29,6 +34,10 @@ while [[ $# -gt 0 ]]; do # CLI 인자를 모두 소진할 때까지 반복
     --certbot-email) CERTBOT_EMAIL="$2"; shift 2 ;; # certbot 이메일 지정
     --sudo-pass) SUDO_PASS="$2"; shift 2 ;; # sudo 비밀번호 지정
     --ssh-pass) SSH_PASS="$2"; shift 2 ;; # SSH 비밀번호 지정
+    --enable-backup) ENABLE_BACKUP="$2"; shift 2 ;;
+    --backup-retention-days) BACKUP_RETENTION_DAYS="$2"; shift 2 ;;
+    --backup-time) BACKUP_TIME="$2"; shift 2 ;;
+    --backup-dir) BACKUP_DIR="$2"; shift 2 ;;
     *) shift 1 ;; # 알 수 없는 인자는 건너뜀
   esac
 done
@@ -48,7 +57,7 @@ if [[ "${API_ORIGIN_SET}" != "true" ]]; then # --api-origin을 사용하지 않�
 fi
 
 if [[ -z "${SERVER_HOST}" ]]; then # 필수 호스트 누락 검사
-  echo "사용법: scripts/deploy.sh --host <SERVER_HOST> [--user <USER>] [--path <REMOTE_PATH>] [--domain <DOMAIN>] [--api-port <PORT>] [--api-origin <URL>] [--enable-ssl true|false] [--certbot-email <EMAIL>] [--sudo-pass <SUDO_PASSWORD>] [--ssh-pass <SSH_PASSWORD>]" # 안내 출력
+  echo "사용법: scripts/deploy.sh --host <SERVER_HOST> [--user <USER>] [--path <REMOTE_PATH>] [--domain <DOMAIN>] [--api-port <PORT>] [--api-origin <URL>] [--enable-ssl true|false] [--certbot-email <EMAIL>] [--enable-backup true|false] [--backup-retention-days <DAYS>] [--backup-time <HH:MM>] [--backup-dir <PATH>] [--sudo-pass <SUDO_PASSWORD>] [--ssh-pass <SSH_PASSWORD>]"
   exit 1 # 비정상 종료
 fi
 
@@ -76,7 +85,8 @@ escape_squote() { # 단일 따옴표를 안전하게 이스케이프 처리
 if [[ -n "${SUDO_PASS}" ]]; then # sudo 비밀번호가 제공되면
   SUDO_PASS_ESCAPED="$(escape_squote "${SUDO_PASS}")" # 단일 따옴표 이스케이프
   run_sudo() { # 원격에서 비밀번호 입력을 포함한 sudo 실행 함수
-    "${SSH_CMD[@]}" "${remote}" "SUDO_PASS='${SUDO_PASS_ESCAPED}'; printf '%s' \"\$SUDO_PASS\" | sudo -S -p '' $1"
+    local cmd="$1"
+    "${SSH_CMD[@]}" "${remote}" "SUDO_PASS='${SUDO_PASS_ESCAPED}'; printf '%s' \"\$SUDO_PASS\" | sudo -S -p '' bash -c $(printf '%q' "${cmd}")"
   }
 fi
 
@@ -116,9 +126,9 @@ echo "백엔드 코드 전송" # FastAPI 소스 및 의존성 파일 업로드
 
 echo "서버 의존성 설치 및 가상환경 구성" # 원격 서버 패키지 설치 및 venv 구성
 if [[ -n "${SUDO_PASS}" ]]; then # sudo 비밀번호 방식 사용
-  run_sudo "apt-get update -y && sudo -S -p '' apt-get install -y python3 python3-venv nginx" # 필수 패키지 설치
+  run_sudo "apt-get update -y && sudo -S -p '' apt-get install -y python3 python3-venv nginx sqlite3"
 else
-  "${SSH_CMD[@]}" "${remote}" "sudo apt-get update -y && sudo apt-get install -y python3 python3-venv nginx" # 필수 패키지 설치
+  "${SSH_CMD[@]}" "${remote}" "sudo apt-get update -y && sudo apt-get install -y python3 python3-venv nginx sqlite3"
 fi
 "${SSH_CMD[@]}" "${remote}" "cd '${REMOTE_PATH}' && python3 -m venv .venv && . .venv/bin/activate && pip install -U pip && pip install -r api/requirements.txt" # venv 생성 및 의존성 설치
 
@@ -151,9 +161,74 @@ mkdir -p "${TMP_DIR}" # 임시 디렉터리 생성
 echo "$UNIT" > "${TMP_DIR}/${SERVICE_NAME}.service" # 로컬에 유닛 파일 생성
 "${SCP_CMD[@]}" "${TMP_DIR}/${SERVICE_NAME}.service" "${remote}:~/${SERVICE_NAME}.service" # 원격 홈으로 전송
 if [[ -n "${SUDO_PASS}" ]]; then # sudo 비밀번호 방식 사용
-  run_sudo "mv ~/${SERVICE_NAME}.service /etc/systemd/system/${SERVICE_NAME}.service && sudo -S -p '' systemctl daemon-reload && sudo -S -p '' systemctl enable ${SERVICE_NAME} && sudo -S -p '' systemctl restart ${SERVICE_NAME}" # 유닛 설치 및 재시작
+  run_sudo "mv /home/${SERVER_USER}/${SERVICE_NAME}.service /etc/systemd/system/${SERVICE_NAME}.service && sudo -S -p '' systemctl daemon-reload && sudo -S -p '' systemctl enable ${SERVICE_NAME} && sudo -S -p '' systemctl restart ${SERVICE_NAME}" # 유닛 설치 및 재시작
 else
   "${SSH_CMD[@]}" "${remote}" "sudo mv ~/${SERVICE_NAME}.service /etc/systemd/system/${SERVICE_NAME}.service && sudo systemctl daemon-reload && sudo systemctl enable ${SERVICE_NAME} && sudo systemctl restart ${SERVICE_NAME}" # 유닛 설치 및 재시작
+fi
+
+if [[ "${ENABLE_BACKUP}" == "true" ]]; then
+  echo "백업 자동화 설정"
+  ON_CALENDAR="*-*-* ${BACKUP_TIME}:00"
+  if [[ "${BACKUP_TIME}" =~ ^[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
+    ON_CALENDAR="*-*-* ${BACKUP_TIME}"
+  fi
+  BACKUP_SCRIPT_LOCAL="${TMP_DIR}/${BACKUP_SERVICE_NAME}.sh"
+  cat <<'BACKUP_SCRIPT' | sed -e "s|__REMOTE_PATH__|${REMOTE_PATH}|g" -e "s|__BACKUP_DIR__|${BACKUP_DIR}|g" -e "s|__RETENTION_DAYS__|${BACKUP_RETENTION_DAYS}|g" -e "s|__SERVICE_USER__|${SERVICE_USER}|g" -e "s|__SERVICE_GROUP__|${SERVICE_GROUP}|g" > "${BACKUP_SCRIPT_LOCAL}"
+#!/usr/bin/env bash
+set -euo pipefail
+REMOTE_PATH="__REMOTE_PATH__"
+BACKUP_DIR="__BACKUP_DIR__"
+RETENTION_DAYS="__RETENTION_DAYS__"
+SERVICE_USER="__SERVICE_USER__"
+SERVICE_GROUP="__SERVICE_GROUP__"
+TS="$(date +%Y%m%d-%H%M%S)"
+TMP_DIR="$(mktemp -d)"
+cleanup() { rm -rf "${TMP_DIR}"; }
+trap cleanup EXIT
+mkdir -p "${BACKUP_DIR}"
+sqlite3 "${REMOTE_PATH}/api/app.db" ".backup '${TMP_DIR}/app-${TS}.sqlite'"
+cp -a "${REMOTE_PATH}/api/uploads" "${TMP_DIR}/uploads"
+tar -C "${TMP_DIR}" -czf "${BACKUP_DIR}/backup-${TS}.tar.gz" "app-${TS}.sqlite" "uploads"
+chown "${SERVICE_USER}:${SERVICE_GROUP}" "${BACKUP_DIR}/backup-${TS}.tar.gz"
+find "${BACKUP_DIR}" -name "backup-*.tar.gz" -type f -mtime +"${RETENTION_DAYS}" -delete
+BACKUP_SCRIPT
+  "${SCP_CMD[@]}" "${BACKUP_SCRIPT_LOCAL}" "${remote}:~/${BACKUP_SERVICE_NAME}.sh"
+  if [[ -n "${SUDO_PASS}" ]]; then
+    run_sudo "mkdir -p '${REMOTE_PATH}/scripts' '${BACKUP_DIR}' && sudo -S -p '' chown -R '${SERVICE_USER}:${SERVICE_GROUP}' '${REMOTE_PATH}/scripts' '${BACKUP_DIR}' && sudo -S -p '' mv /home/${SERVER_USER}/${BACKUP_SERVICE_NAME}.sh '${REMOTE_PATH}/scripts/${BACKUP_SERVICE_NAME}.sh' && sudo -S -p '' chmod 755 '${REMOTE_PATH}/scripts/${BACKUP_SERVICE_NAME}.sh' && sudo -S -p '' chown '${SERVICE_USER}:${SERVICE_GROUP}' '${REMOTE_PATH}/scripts/${BACKUP_SERVICE_NAME}.sh'"
+  else
+    "${SSH_CMD[@]}" "${remote}" "sudo mkdir -p '${REMOTE_PATH}/scripts' '${BACKUP_DIR}' && sudo chown -R '${SERVICE_USER}:${SERVICE_GROUP}' '${REMOTE_PATH}/scripts' '${BACKUP_DIR}' && sudo mv ~/${BACKUP_SERVICE_NAME}.sh '${REMOTE_PATH}/scripts/${BACKUP_SERVICE_NAME}.sh' && sudo chmod 755 '${REMOTE_PATH}/scripts/${BACKUP_SERVICE_NAME}.sh' && sudo chown '${SERVICE_USER}:${SERVICE_GROUP}' '${REMOTE_PATH}/scripts/${BACKUP_SERVICE_NAME}.sh'"
+  fi
+  BACKUP_UNIT="[Unit]
+Description=Lalawon Backup Service
+After=network.target
+
+[Service]
+Type=oneshot
+User=${SERVICE_USER}
+Group=${SERVICE_GROUP}
+WorkingDirectory=${REMOTE_PATH}
+ExecStart=${REMOTE_PATH}/scripts/${BACKUP_SERVICE_NAME}.sh
+"
+  BACKUP_TIMER="[Unit]
+Description=Lalawon Backup Timer
+
+[Timer]
+OnCalendar=${ON_CALENDAR}
+Persistent=true
+Unit=${BACKUP_SERVICE_NAME}.service
+
+[Install]
+WantedBy=timers.target
+"
+  echo "$BACKUP_UNIT" > "${TMP_DIR}/${BACKUP_SERVICE_NAME}.service"
+  echo "$BACKUP_TIMER" > "${TMP_DIR}/${BACKUP_SERVICE_NAME}.timer"
+  "${SCP_CMD[@]}" "${TMP_DIR}/${BACKUP_SERVICE_NAME}.service" "${remote}:~/${BACKUP_SERVICE_NAME}.service"
+  "${SCP_CMD[@]}" "${TMP_DIR}/${BACKUP_SERVICE_NAME}.timer" "${remote}:~/${BACKUP_SERVICE_NAME}.timer"
+  if [[ -n "${SUDO_PASS}" ]]; then
+    run_sudo "mv /home/${SERVER_USER}/${BACKUP_SERVICE_NAME}.service /etc/systemd/system/${BACKUP_SERVICE_NAME}.service && mv /home/${SERVER_USER}/${BACKUP_SERVICE_NAME}.timer /etc/systemd/system/${BACKUP_SERVICE_NAME}.timer && sudo -S -p '' systemctl daemon-reload && sudo -S -p '' systemctl enable ${BACKUP_SERVICE_NAME}.timer && sudo -S -p '' systemctl restart ${BACKUP_SERVICE_NAME}.timer"
+  else
+    "${SSH_CMD[@]}" "${remote}" "sudo mv ~/${BACKUP_SERVICE_NAME}.service /etc/systemd/system/${BACKUP_SERVICE_NAME}.service && sudo mv ~/${BACKUP_SERVICE_NAME}.timer /etc/systemd/system/${BACKUP_SERVICE_NAME}.timer && sudo systemctl daemon-reload && sudo systemctl enable ${BACKUP_SERVICE_NAME}.timer && sudo systemctl restart ${BACKUP_SERVICE_NAME}.timer"
+  fi
 fi
 
 echo "Nginx 설정 생성" # nginx 설정 파일 생성
@@ -190,7 +265,7 @@ server {
 NGINX_CONF
 "${SCP_CMD[@]}" "${NGINX_LOCAL}" "${remote}:~/${SITE_NAME}.conf" # 원격 홈으로 전송
 if [[ -n "${SUDO_PASS}" ]]; then # sudo 비밀번호 방식 사용
-  run_sudo "mv ~/${SITE_NAME}.conf /etc/nginx/sites-available/${SITE_NAME} && sudo -S -p '' ln -sf /etc/nginx/sites-available/${SITE_NAME} /etc/nginx/sites-enabled/${SITE_NAME} && sudo -S -p '' nginx -t && sudo -S -p '' systemctl reload nginx" # 설정 반영 및 재로드
+  run_sudo "mv /home/${SERVER_USER}/${SITE_NAME}.conf /etc/nginx/sites-available/${SITE_NAME} && sudo -S -p '' ln -sf /etc/nginx/sites-available/${SITE_NAME} /etc/nginx/sites-enabled/${SITE_NAME} && sudo -S -p '' nginx -t && sudo -S -p '' systemctl reload nginx" # 설정 반영 및 재로드
 else
   "${SSH_CMD[@]}" "${remote}" "sudo mv ~/${SITE_NAME}.conf /etc/nginx/sites-available/${SITE_NAME} && sudo ln -sf /etc/nginx/sites-available/${SITE_NAME} /etc/nginx/sites-enabled/${SITE_NAME} && sudo nginx -t && sudo systemctl reload nginx" # 설정 반영 및 재로드
 fi

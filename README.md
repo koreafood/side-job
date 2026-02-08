@@ -283,3 +283,45 @@ graph TD
 # Frontend 유닛 테스트 및 API 클라이언트 테스트 실행
 npm run test
 ```
+
+---
+
+## 8. 운영 지침 (Backup)
+
+### 8.1. 백업 정책
+*   대상: `api/app.db`, `api/uploads`
+*   방식: SQLite `.backup` 기반 스냅샷 + uploads 폴더 전체를 tar.gz로 묶어 보관
+*   주기: 매일 03:00
+*   보존: 14일
+*   저장 위치: `${REMOTE_PATH}/backups`
+
+### 8.2. 배포 시 자동 설정 옵션
+*   `--enable-backup true|false` (기본 true)
+*   `--backup-retention-days <DAYS>` (기본 14)
+*   `--backup-time <HH:MM>` (기본 03:00)
+*   `--backup-dir <PATH>` (기본 `${REMOTE_PATH}/backups`)
+
+### 8.3. 상태 확인
+```bash
+sudo systemctl status lalawon-api-backup.timer
+sudo systemctl list-timers --all | grep backup
+```
+
+### 8.4. 수동 백업 실행
+```bash
+sudo systemctl start lalawon-api-backup.service
+```
+
+### 8.5. 복구 절차
+1. 서비스 중지
+2. 원하는 백업 파일 선택 후 압축 해제
+3. `app.db` 교체 및 `uploads` 복원
+4. 소유권 정리 후 서비스 재시작
+```bash
+sudo systemctl stop lalawon-api
+tar -C /tmp -xzf /srv/lalawon/app/backups/backup-YYYYMMDD-HHMMSS.tar.gz
+sudo cp /tmp/app-YYYYMMDD-HHMMSS.sqlite /srv/lalawon/app/api/app.db
+sudo rsync -a --delete /tmp/uploads/ /srv/lalawon/app/api/uploads/
+sudo chown -R ubuntu:ubuntu /srv/lalawon/app/api/app.db /srv/lalawon/app/api/uploads
+sudo systemctl start lalawon-api
+```
