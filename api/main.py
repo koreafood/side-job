@@ -1144,7 +1144,7 @@ def public_list_recent_orders(
     lim = max(1, min(100, limit))
     rows = session.exec(
         select(Order)
-        .where(Order.shipping_status != "delivered")
+        .where(Order.order_status.in_(["pending", "paid"]))
         .order_by(Order.ordered_at.desc())
         .limit(lim)
     ).all()

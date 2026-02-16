@@ -127,7 +127,7 @@ onMounted(() => {
 
     <div v-else-if="product" class="grid gap-6 lg:grid-cols-[1fr_360px]">
       <section class="space-y-4">
-        <div class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">최신 상품 페이지</div>
+        <div class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">작품 페이지</div>
         <h1 class="text-xl font-semibold tracking-tight">{{ product.name }}</h1>
         <ImageGallery :images="product.images" :alt="product.name" />
 
@@ -229,7 +229,7 @@ onMounted(() => {
             @click="addToCart"
           >
             <ShoppingCart class="h-4 w-4" />
-            카트에 담기
+            주문하기
           </button>
           <div v-if="cart.state.error" class="mt-3 text-xs font-semibold text-rose-600">
             {{ cart.state.error }}
