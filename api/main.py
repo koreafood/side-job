@@ -79,6 +79,8 @@ from api.seed import seed_if_empty
 
 app = FastAPI()
 
+MAX_CART_ITEMS = 5
+
 if os.getenv("VERCEL") == "1":
     UPLOAD_DIR = Path("/tmp") / "uploads"
 else:
@@ -754,22 +756,30 @@ def add_cart_item(
         raise HTTPException(status_code=404, detail="상품을 찾을 수 없어요.")
 
     cart = _ensure_cart(session, response, cart_id)
+    items = session.exec(select(CartItem).where(CartItem.cart_id == cart.id)).all()
+    total_qty = sum(it.qty for it in items)
+    remaining = MAX_CART_ITEMS - total_qty
+    if remaining <= 0:
+        raise HTTPException(status_code=400, detail="장바구니에는 최대 5개까지만 담을 수 있어요.")
     existing = session.exec(
         select(CartItem).where(
             (CartItem.cart_id == cart.id) & (CartItem.product_id == input.productId)
         )
     ).first()
+    add_qty = min(input.qty, remaining)
+    if add_qty <= 0:
+        raise HTTPException(status_code=400, detail="장바구니에는 최대 5개까지만 담을 수 있어요.")
 
     if existing is None:
         item = CartItem(
             id=f"ci_{uuid4().hex}",
             cart_id=cart.id,
             product_id=input.productId,
-            qty=input.qty,
+            qty=add_qty,
         )
         session.add(item)
     else:
-        existing.qty = min(99, existing.qty + input.qty)
+        existing.qty = existing.qty + add_qty
         session.add(existing)
 
     session.commit()
@@ -788,6 +798,12 @@ def update_cart_item_qty(
     item = session.get(CartItem, item_id)
     if item is None or item.cart_id != cart.id:
         raise HTTPException(status_code=404, detail="장바구니 항목을 찾을 수 없어요.")
+    items = session.exec(select(CartItem).where(CartItem.cart_id == cart.id)).all()
+    other_total = sum(it.qty for it in items if it.id != item.id)
+    if input.qty < 1:
+        raise HTTPException(status_code=400, detail="수량은 1개 이상이어야 해요.")
+    if input.qty > MAX_CART_ITEMS or other_total + input.qty > MAX_CART_ITEMS:
+        raise HTTPException(status_code=400, detail="장바구니에는 최대 5개까지만 담을 수 있어요.")
     item.qty = input.qty
     session.add(item)
     session.commit()
