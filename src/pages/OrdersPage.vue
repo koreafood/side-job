@@ -86,12 +86,9 @@ onMounted(() => {
     </div>
 
     <div v-else class="space-y-6">
-      <div>
+      <div v-if="shippingRows.length > 0">
         <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">배송중</div>
-        <div v-if="shippingRows.length === 0" class="mt-2 rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-          배송중 내역이 없어요.
-        </div>
-        <div v-else class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
           <div class="overflow-x-auto">
             <table class="w-full min-w-[720px] text-sm">
               <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
@@ -123,12 +120,9 @@ onMounted(() => {
         </div>
       </div>
 
-      <div>
+      <div v-if="preparingRows.length > 0">
         <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">상품준비</div>
-        <div v-if="preparingRows.length === 0" class="mt-2 rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-          상품준비 내역이 없어요.
-        </div>
-        <div v-else class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
           <div class="overflow-x-auto">
             <table class="w-full min-w-[720px] text-sm">
               <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
@@ -160,12 +154,9 @@ onMounted(() => {
         </div>
       </div>
 
-      <div>
+      <div v-if="paidWorkingRows.length > 0">
         <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">결재완료(제작중)</div>
-        <div v-if="paidWorkingRows.length === 0" class="mt-2 rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-          결재완료(제작중) 내역이 없어요.
-        </div>
-        <div v-else class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
           <div class="overflow-x-auto">
             <table class="w-full min-w-[800px] text-sm">
               <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
@@ -204,12 +195,9 @@ onMounted(() => {
         </div>
       </div>
 
-      <div>
+      <div v-if="paidReadyRows.length > 0">
         <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">결재완료</div>
-        <div v-if="paidReadyRows.length === 0" class="mt-2 rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-          결재완료 내역이 없어요.
-        </div>
-        <div v-else class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
           <div class="overflow-x-auto">
             <table class="w-full min-w-[720px] text-sm">
               <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
@@ -241,12 +229,9 @@ onMounted(() => {
         </div>
       </div>
 
-      <div>
+      <div v-if="pendingRows.length > 0">
         <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">결제대기</div>
-        <div v-if="pendingRows.length === 0" class="mt-2 rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-          결제대기 내역이 없어요.
-        </div>
-        <div v-else class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div class="mt-2 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
           <div class="overflow-x-auto">
             <table class="w-full min-w-[720px] text-sm">
               <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
