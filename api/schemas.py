@@ -106,6 +106,7 @@ class OrderCreateIn(BaseModel):
     customerName: str = Field(min_length=1, max_length=120)
     customerPhone: str = Field(min_length=1, max_length=40)
     shippingAddress: str = Field(min_length=1, max_length=400)
+    shippingAddress2: str = Field(default="", max_length=400)
     recipientName: str = Field(min_length=1, max_length=120)
     shippingMemo: str = Field(default="", max_length=200)
 

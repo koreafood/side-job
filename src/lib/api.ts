@@ -431,6 +431,7 @@ export const api = {
     customerName: string
     customerPhone: string
     shippingAddress: string
+    shippingAddress2?: string
     recipientName: string
     shippingMemo?: string
   }) =>

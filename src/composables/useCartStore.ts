@@ -93,6 +93,7 @@ async function checkout(input: {
   customerName: string
   customerPhone: string
   shippingAddress: string
+  shippingAddress2?: string
   recipientName: string
   shippingMemo?: string
 }) {

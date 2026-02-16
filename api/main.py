@@ -950,7 +950,7 @@ def create_order(
         recipient_name=body.recipientName.strip(),
         recipient_phone=body.customerPhone.strip(),
         shipping_address1=body.shippingAddress.strip(),
-        shipping_address2="",
+        shipping_address2=body.shippingAddress2.strip(),
         shipping_memo=body.shippingMemo.strip(),
         order_status="pending",
         payment_status="unpaid",

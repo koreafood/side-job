@@ -24,6 +24,7 @@ const form = reactive({
   customerName: '',
   customerPhone: '',
   shippingAddress: '',
+  shippingAddress2: '',
   recipientName: '',
   shippingMemo: '',
 })
@@ -44,6 +45,7 @@ function openAddressSearch() {
   new window.daum.Postcode({
     oncomplete: (data) => {
       form.shippingAddress = data.address
+      form.shippingAddress2 = ''
     },
   }).open()
 }
@@ -83,6 +85,7 @@ async function placeOrder() {
     customerName: form.customerName,
     customerPhone: form.customerPhone,
     shippingAddress: form.shippingAddress,
+    shippingAddress2: form.shippingAddress2,
     recipientName: form.recipientName,
     shippingMemo: form.shippingMemo,
   })
@@ -210,6 +213,7 @@ onMounted(() => {
                 <input
                   v-model="form.shippingAddress"
                   type="text"
+                  readonly
                   class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
                 />
                 <button
@@ -220,6 +224,16 @@ onMounted(() => {
                   주소검색
                 </button>
               </div>
+            </label>
+
+            <label class="space-y-1">
+              <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">배송상세주소</div>
+              <input
+                v-model="form.shippingAddress2"
+                type="text"
+                class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
+                placeholder="예) 101동 1004호"
+              />
             </label>
 
             <label class="space-y-1">
