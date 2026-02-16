@@ -307,6 +307,7 @@ onMounted(() => {
               <th class="px-4 py-3 text-left font-semibold">주문상태</th>
               <th class="px-4 py-3 text-left font-semibold">결제</th>
               <th class="px-4 py-3 text-left font-semibold">배송</th>
+              <th class="px-4 py-3 text-left font-semibold">최종 제작단계</th>
               <th class="px-4 py-3 text-right font-semibold">액션</th>
             </tr>
           </thead>
@@ -339,6 +340,15 @@ onMounted(() => {
                 <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold" :class="badgeClass('shipping', o.shippingStatus)">
                   {{ label(o.shippingStatus) }}
                 </span>
+              </td>
+              <td class="px-4 py-3 text-zinc-700 dark:text-zinc-200">
+                <div v-if="o.lastProductionStepIndex !== null" class="space-y-1">
+                  <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                    {{ o.lastProductionStepIndex }}단계
+                  </div>
+                  <div class="font-medium">{{ o.lastProductionStepMemo || '-' }}</div>
+                </div>
+                <div v-else class="text-sm text-zinc-500 dark:text-zinc-400">없음</div>
               </td>
               <td class="px-4 py-3 text-right">
                 <button

@@ -143,6 +143,8 @@ export type AdminOrderSummary = {
   orderStatus: AdminOrderStatus
   paymentStatus: AdminPaymentStatus
   shippingStatus: AdminShippingStatus
+  lastProductionStepIndex: number | null
+  lastProductionStepMemo: string
 }
 
 /**
@@ -226,4 +228,6 @@ export type ProductOrderSummary = {
   totalJpy: number
   orderStatus: AdminOrderStatus
   productImageUrl: string
+  lastProductionStepIndex: number | null
+  lastProductionStepMemo: string
 }

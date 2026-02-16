@@ -423,8 +423,16 @@ def _ensure_order_defaults(o: Order) -> None:
         o.updated_at = o.created_at
 
 
-def _admin_order_summary(o: Order) -> AdminOrderSummaryOut:
+def _admin_order_summary(session: Session, o: Order) -> AdminOrderSummaryOut:
     _ensure_order_defaults(o)
+    last_step = session.exec(
+        select(ProductionStep)
+        .where(ProductionStep.order_id == o.id)
+        .order_by(ProductionStep.step_index.desc())
+        .limit(1)
+    ).first()
+    last_idx = last_step.step_index if last_step else None
+    last_memo = last_step.memo if last_step else ""
     return AdminOrderSummaryOut(
         id=o.id,
         orderNo=o.order_no,
@@ -435,11 +443,21 @@ def _admin_order_summary(o: Order) -> AdminOrderSummaryOut:
         orderStatus=o.order_status,
         paymentStatus=o.payment_status,
         shippingStatus=o.shipping_status,
+        lastProductionStepIndex=last_idx,
+        lastProductionStepMemo=last_memo,
     )
 
 
 def _order_summary_with_image(session: Session, o: Order, product_id: str | None = None) -> ProductOrderSummaryOut:
     _ensure_order_defaults(o)
+    last_step = session.exec(
+        select(ProductionStep)
+        .where(ProductionStep.order_id == o.id)
+        .order_by(ProductionStep.step_index.desc())
+        .limit(1)
+    ).first()
+    last_idx = last_step.step_index if last_step else None
+    last_memo = last_step.memo if last_step else ""
     pid = product_id
     if pid is None:
         item = session.exec(
@@ -455,6 +473,8 @@ def _order_summary_with_image(session: Session, o: Order, product_id: str | None
         totalJpy=o.total_jpy,
         orderStatus=o.order_status,
         productImageUrl=url,
+        lastProductionStepIndex=last_idx,
+        lastProductionStepMemo=last_memo,
     )
 
 
@@ -1041,7 +1061,12 @@ def admin_list_orders(
     stmt = stmt.order_by(Order.ordered_at.desc())
     total = session.exec(select(func.count()).select_from(stmt.subquery())).one()
     rows = session.exec(stmt.offset((p - 1) * ps).limit(ps)).all()
-    return AdminOrderListOut(items=[_admin_order_summary(o) for o in rows], total=total, page=p, pageSize=ps)
+    return AdminOrderListOut(
+        items=[_admin_order_summary(session, o) for o in rows],
+        total=total,
+        page=p,
+        pageSize=ps,
+    )
 
 
 @app.get("/api/admin/orders/{order_id}", response_model=AdminOrderDetailOut)
@@ -1144,7 +1169,7 @@ def public_list_recent_orders(
     lim = max(1, min(100, limit))
     rows = session.exec(
         select(Order)
-        .where(Order.order_status.in_(["pending", "paid"]))
+        .where(Order.order_status.in_(["pending", "paid", "preparing", "shipped"]))
         .order_by(Order.ordered_at.desc())
         .limit(lim)
     ).all()

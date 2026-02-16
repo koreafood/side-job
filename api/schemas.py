@@ -121,6 +121,8 @@ class AdminOrderSummaryOut(BaseModel):
     orderStatus: str
     paymentStatus: str
     shippingStatus: str
+    lastProductionStepIndex: int | None
+    lastProductionStepMemo: str
 
 
 class AdminOrderListOut(BaseModel):
@@ -240,3 +242,5 @@ class ProductOrderSummaryOut(BaseModel):
     totalJpy: int
     orderStatus: str
     productImageUrl: str
+    lastProductionStepIndex: int | None
+    lastProductionStepMemo: str
