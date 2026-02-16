@@ -5,3 +5,15 @@ declare module '*.vue' {
   const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>
   export default component
 }
+
+declare global {
+  interface Window {
+    daum?: {
+      Postcode: new (options: { oncomplete: (data: { address: string }) => void }) => {
+        open: () => void
+      }
+    }
+  }
+}
+
+export {}
