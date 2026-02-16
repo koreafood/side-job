@@ -225,4 +225,5 @@ export type ProductOrderSummary = {
   orderedAt: string
   totalJpy: number
   orderStatus: AdminOrderStatus
+  productImageUrl: string
 }

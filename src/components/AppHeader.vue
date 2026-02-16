@@ -110,7 +110,7 @@ onMounted(() => {
         @click="$router.push({ name: 'orders' })"
       >
         <Package class="h-4 w-4" />
-        <span class="hidden sm:inline">내 주문</span>
+        <span class="hidden sm:inline">제작 여정</span>
       </button>
 
       <!-- 관리자용: 상품목록 버튼 (로그인 시만 노출) -->

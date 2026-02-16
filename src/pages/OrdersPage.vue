@@ -1,30 +1,25 @@
 <script setup lang="ts">
 /**
- * 내 주문 목록 페이지
- * - 역할: 사용자가 브라우저(로컬 스토리지)에 저장된 주문 내역을 확인하는 페이지
+ * 최근 주문 목록 페이지
+ * - 역할: 최근 주문 내역을 확인하는 페이지
  * - 주요 기능:
- *   - 로컬 스토리지에서 주문 ID 목록 조회
- *   - 각 주문의 상세 정보(상태, 금액 등) API 조회
- *   - 주문 ID 직접 추가 및 목록에서 삭제
+ *   - 내 주문 목록 조회
  * - 의존성: vue, vue-router, @/lib/api.ts
  */
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/lib/api'
-import type { PublicOrderDetail } from '@/lib/types'
+import { api, ApiError } from '@/lib/api'
+import type { ProductOrderSummary } from '@/lib/types'
 
 const router = useRouter()
 
 const status = ref<'idle' | 'loading' | 'error' | 'ready'>('idle')
 const error = ref<string | null>(null)
-const inputOrderId = ref('')
 
-/** 주문 목록 테이블 행 데이터 타입 */
-type Row = { id: string; detail?: PublicOrderDetail; error?: string }
-const rows = ref<Row[]>([])
+const rows = ref<ProductOrderSummary[]>([])
 
 function money(v: number) {
-  return `¥${v.toLocaleString()}`
+  return v.toLocaleString()
 }
 
 function formatDate(s: string) {
@@ -47,74 +42,33 @@ function label(v: string) {
   return map[v] ?? v
 }
 
-/** 로컬 스토리지에서 주문 ID 목록 읽기 */
-function readMyOrders(): string[] {
-  try {
-    const raw = localStorage.getItem('myOrders')
-    const parsed = raw ? (JSON.parse(raw) as unknown) : []
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((it): it is string => typeof it === 'string')
-  } catch {
-    return []
+function apiErrorMessage(e: unknown, fallback: string) {
+  if (e instanceof ApiError) {
+    const body = e.body as { detail?: unknown } | undefined
+    if (body && typeof body.detail === 'string') return body.detail
+    return e.message || fallback
   }
+  if (e instanceof Error) return e.message
+  return fallback
 }
-
-/** 로컬 스토리지에 주문 ID 목록 저장 */
-function writeMyOrders(ids: string[]) {
-  localStorage.setItem('myOrders', JSON.stringify(ids))
-}
-
-const ids = computed(() => rows.value.map((r) => r.id))
 
 /**
  * 주문 목록 로드 및 상세 정보 조회
- * - 로직:
- *   1. 로컬 스토리지에서 ID 목록 읽기
- *   2. 각 ID별로 API `getPublicOrder` 병렬 호출
- *   3. 결과(성공/실패)를 행 데이터에 업데이트
  */
 async function load() {
   status.value = 'loading'
   error.value = null
-  const list = readMyOrders()
-  rows.value = list.map((id) => ({ id }))
-
-  await Promise.all(
-    rows.value.map(async (r) => {
-      try {
-        r.detail = await api.getPublicOrder(r.id)
-      } catch (e) {
-        r.error = e instanceof Error ? e.message : '조회 실패'
-      }
-    }),
-  )
-
-  status.value = 'ready'
-}
-
-/** 주문 ID 수동 추가 */
-function add() {
-  const id = inputOrderId.value.trim()
-  if (!id) return
-  if (ids.value.includes(id)) {
-    inputOrderId.value = ''
-    return
+  try {
+    rows.value = await api.listRecentOrders()
+    status.value = 'ready'
+  } catch (e) {
+    status.value = 'error'
+    error.value = apiErrorMessage(e, '조회 실패')
   }
-  const next = [id, ...ids.value]
-  writeMyOrders(next)
-  inputOrderId.value = ''
-  void load()
 }
 
-/** 목록에서 주문 제거 (로컬 스토리지 삭제) */
-function remove(id: string) {
-  const next = ids.value.filter((it) => it !== id)
-  writeMyOrders(next)
-  void load()
-}
-
-function go(id: string) {
-  router.push({ name: 'order-detail', params: { orderId: id } })
+function go(orderNo: string) {
+  router.push({ name: 'order-detail', params: { orderId: orderNo } })
 }
 
 onMounted(() => {
@@ -125,29 +79,8 @@ onMounted(() => {
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-lg font-semibold">내 주문</h1>
+      <h1 class="text-lg font-semibold">제작 여정</h1>
       <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">주문상세 번호를 클릭하면 제작 단계를 볼 수 있어요.</p>
-    </div>
-
-    <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-      <div class="text-sm font-semibold">주문상세 번호 추가</div>
-      <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <input
-          v-model="inputOrderId"
-          type="text"
-          class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-          placeholder="예) ord_xxx"
-          @keydown.enter.prevent="add"
-        />
-        <button
-          type="button"
-          class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-          @click="add"
-        >
-          추가
-        </button>
-      </div>
-      <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">데모용: 이 브라우저에 저장된 주문만 보여요.</div>
     </div>
 
     <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
@@ -157,7 +90,7 @@ onMounted(() => {
     <div v-if="status === 'loading'" class="h-[240px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
 
     <div v-else-if="rows.length === 0" class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-      저장된 주문이 없어요.
+      주문 내역이 없어요.
     </div>
 
     <div v-else class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -165,38 +98,33 @@ onMounted(() => {
         <table class="w-full min-w-[720px] text-sm">
           <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
             <tr>
+              <th class="px-4 py-3 text-left font-semibold">대표</th>
               <th class="px-4 py-3 text-left font-semibold">주문상세 번호</th>
               <th class="px-4 py-3 text-left font-semibold">주문일시</th>
               <th class="px-4 py-3 text-right font-semibold">총액</th>
               <th class="px-4 py-3 text-left font-semibold">상태</th>
-              <th class="px-4 py-3 text-right font-semibold">액션</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
             <tr v-for="r in rows" :key="r.id" class="transition hover:bg-zinc-50 dark:hover:bg-zinc-900/40">
+              <td class="px-4 py-3">
+                <div class="h-10 w-10 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
+                  <img v-if="r.productImageUrl" :src="r.productImageUrl" class="h-full w-full object-cover" alt="">
+                </div>
+              </td>
               <td class="px-4 py-3 font-semibold">
-                <button type="button" class="underline decoration-zinc-300 underline-offset-2" @click="go(r.id)">
-                  {{ r.detail ? r.detail.orderNo : r.id }}
+                <button type="button" class="underline decoration-zinc-300 underline-offset-2" @click="go(r.orderNo)">
+                  {{ r.orderNo }}
                 </button>
-                <div v-if="r.error" class="mt-1 text-xs text-rose-600">{{ r.error }}</div>
               </td>
               <td class="px-4 py-3 text-zinc-700 dark:text-zinc-200">
-                {{ r.detail ? formatDate(r.detail.orderedAt) : '-' }}
+                {{ formatDate(r.orderedAt) }}
               </td>
               <td class="px-4 py-3 text-right font-semibold">
-                {{ r.detail ? money(r.detail.totalJpy) : '-' }}
+                {{ money(r.totalJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
               </td>
               <td class="px-4 py-3">
-                {{ r.detail ? label(r.detail.orderStatus) : '-' }}
-              </td>
-              <td class="px-4 py-3 text-right">
-                <button
-                  type="button"
-                  class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
-                  @click="remove(r.id)"
-                >
-                  제거
-                </button>
+                {{ label(r.orderStatus) }}
               </td>
             </tr>
           </tbody>

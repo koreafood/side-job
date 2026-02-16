@@ -9,7 +9,7 @@
  */
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { api } from '@/lib/api'
+import { api, ApiError } from '@/lib/api'
 import type { PublicOrderDetail } from '@/lib/types'
 import ProductionStepsTimeline from '@/components/ProductionStepsTimeline.vue'
 import ReviewForm from '@/components/ReviewForm.vue'
@@ -25,7 +25,7 @@ const order = ref<PublicOrderDetail | null>(null)
 const selectedProductId = ref<string>('')
 
 function money(v: number) {
-  return `¥${v.toLocaleString()}`
+  return v.toLocaleString()
 }
 
 function formatDate(s: string) {
@@ -47,6 +47,16 @@ function label(v: string) {
   return map[v] ?? v
 }
 
+function apiErrorMessage(e: unknown, fallback: string) {
+  if (e instanceof ApiError) {
+    const body = e.body as { detail?: unknown } | undefined
+    if (body && typeof body.detail === 'string') return body.detail
+    return e.message || fallback
+  }
+  if (e instanceof Error) return e.message
+  return fallback
+}
+
 /**
  * 주문 정보 로드
  * - API: getPublicOrder
@@ -60,7 +70,7 @@ async function load() {
     status.value = 'ready'
   } catch (e) {
     status.value = 'error'
-    error.value = e instanceof Error ? e.message : '주문을 불러오지 못했어요.'
+    error.value = apiErrorMessage(e, '주문을 불러오지 못했어요.')
   }
 }
 
@@ -105,7 +115,9 @@ onMounted(() => {
             <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">상태</div>
             <div class="mt-1 text-sm font-semibold">{{ label(order.orderStatus) }}</div>
             <div class="mt-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400">총액</div>
-            <div class="mt-1 text-xl font-semibold">{{ money(order.totalJpy) }}</div>
+            <div class="mt-1 text-xl font-semibold">
+              {{ money(order.totalJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
+            </div>
           </div>
         </div>
       </div>

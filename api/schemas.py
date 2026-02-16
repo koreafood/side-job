@@ -238,3 +238,4 @@ class ProductOrderSummaryOut(BaseModel):
     orderedAt: datetime
     totalJpy: int
     orderStatus: str
+    productImageUrl: str

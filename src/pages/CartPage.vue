@@ -32,7 +32,7 @@ const form = reactive({
 const items = computed(() => cart.state.cart?.items ?? [])
 
 function money(v: number) {
-  return `¥${v.toLocaleString()}`
+  return v.toLocaleString()
 }
 
 /**
@@ -75,18 +75,8 @@ async function placeOrder() {
     shippingMemo: form.shippingMemo,
   })
   if (order) {
-    orderMessage.value = `주문이 생성됐어요. 주문번호: ${order.orderNo} (총액 ${money(order.totalJpy)})`
+    orderMessage.value = `주문이 생성됐어요. 주문번호: ${order.orderNo} (총액 ${money(order.totalJpy)}원)`
     orderId.value = order.id
-    try {
-      // 로컬 스토리지에 내 주문 ID 목록 업데이트 (최대 50개)
-      const raw = localStorage.getItem('myOrders')
-      const parsed = raw ? (JSON.parse(raw) as unknown) : []
-      const list = Array.isArray(parsed) ? parsed.filter((it): it is string => typeof it === 'string') : []
-      const next = [order.id, ...list.filter((it) => it !== order.id)].slice(0, 50)
-      localStorage.setItem('myOrders', JSON.stringify(next))
-    } catch {
-      void 0
-    }
   }
 }
 
@@ -141,7 +131,9 @@ onMounted(() => {
             >
               {{ it.product.name }}
             </button>
-            <div class="mt-1 text-sm font-semibold">{{ money(it.product.priceJpy) }}</div>
+            <div class="mt-1 text-sm font-semibold">
+              {{ money(it.product.priceJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
+            </div>
             <div class="mt-3 flex items-center gap-2">
               <button
                 type="button"
@@ -249,7 +241,9 @@ onMounted(() => {
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div class="flex items-center justify-between">
             <div class="text-sm font-semibold">총액</div>
-            <div class="text-lg font-semibold">{{ money(cart.totalJpy.value) }}</div>
+            <div class="text-lg font-semibold">
+              {{ money(cart.totalJpy.value) }}<span class="ml-0.5 text-[0.75em]">원</span>
+            </div>
           </div>
           <button
             type="button"

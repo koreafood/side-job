@@ -332,6 +332,8 @@ export const api = {
   getPublicOrder: (orderId: string) =>
     apiFetch<PublicOrderDetail>(`/api/orders/${encodeURIComponent(orderId)}`),
 
+  listRecentOrders: () => apiFetch<ProductOrderSummary[]>('/api/orders/recent'),
+
   /** 
    * 공개 제작 과정 조회 (고객용) 
    * - 입력: orderId

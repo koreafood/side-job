@@ -49,10 +49,10 @@ const totalPages = computed(() => {
 /**
  * 금액 포맷팅 함수
  * @param v 금액 (숫자)
- * @returns '¥1,000' 형식의 문자열
+ * @returns '1,000' 형식의 문자열
  */
 function money(v: number) {
-  return `¥${v.toLocaleString()}`
+  return v.toLocaleString()
 }
 
 /**
@@ -322,7 +322,9 @@ onMounted(() => {
                 <div class="font-medium">{{ o.customerName }}</div>
                 <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ o.customerPhone }}</div>
               </td>
-              <td class="px-4 py-3 text-right font-semibold">{{ money(o.totalJpy) }}</td>
+              <td class="px-4 py-3 text-right font-semibold">
+                {{ money(o.totalJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
+              </td>
               <td class="px-4 py-3">
                 <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold" :class="badgeClass('order', o.orderStatus)">
                   {{ label(o.orderStatus) }}
@@ -388,4 +390,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-

@@ -24,6 +24,7 @@ from uuid import uuid4
 import secrets
 import string
 import re
+import json
 
 from fastapi import Cookie, Depends, FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -325,6 +326,33 @@ def _ensure_cart(session: Session, response: Response, cart_id: str | None) -> C
     return cart
 
 
+def _parse_my_orders(value: str | None) -> list[str]:
+    if not value:
+        return []
+    try:
+        parsed = json.loads(value)
+    except Exception:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    out: list[str] = []
+    for it in parsed:
+        if isinstance(it, str) and it:
+            out.append(it)
+    return out
+
+
+def _set_my_orders_cookie(response: Response, ids: list[str]) -> None:
+    response.set_cookie(
+        key="my_orders",
+        value=json.dumps(ids),
+        max_age=60 * 60 * 24 * 30,
+        httponly=True,
+        samesite="lax",
+        secure=os.getenv("VERCEL") == "1",
+    )
+
+
 def _cart_out(session: Session, cart: Cart) -> CartOut:
     items = session.exec(select(CartItem).where(CartItem.cart_id == cart.id)).all()
     product_ids = [it.product_id for it in items]
@@ -407,6 +435,26 @@ def _admin_order_summary(o: Order) -> AdminOrderSummaryOut:
         orderStatus=o.order_status,
         paymentStatus=o.payment_status,
         shippingStatus=o.shipping_status,
+    )
+
+
+def _order_summary_with_image(session: Session, o: Order, product_id: str | None = None) -> ProductOrderSummaryOut:
+    _ensure_order_defaults(o)
+    pid = product_id
+    if pid is None:
+        item = session.exec(
+            select(OrderItem).where(OrderItem.order_id == o.id).order_by(OrderItem.id).limit(1)
+        ).first()
+        pid = item.product_id if item else ""
+    images = _product_images(session, pid) if pid else []
+    url = images[0].url if images else ""
+    return ProductOrderSummaryOut(
+        id=o.id,
+        orderNo=o.order_no,
+        orderedAt=o.ordered_at,
+        totalJpy=o.total_jpy,
+        orderStatus=o.order_status,
+        productImageUrl=url,
     )
 
 
@@ -831,6 +879,7 @@ def create_order(
     body: OrderCreateIn,
     response: Response,
     cart_id: str | None = Cookie(default=None),
+    my_orders: str | None = Cookie(default=None),
     session: Session = Depends(get_session_dep),
 ) -> OrderOut:
     # 입력값 정리
@@ -925,7 +974,10 @@ def create_order(
     session.commit()
     session.refresh(order)
 
-    # 클라이언트 응답용 요약 정보 반환
+    ids = _parse_my_orders(my_orders)
+    next_ids = [order.id, *[it for it in ids if it != order.id]]
+    _set_my_orders_cookie(response, next_ids[:50])
+
     return OrderOut(id=order.id, orderNo=order.order_no, totalJpy=order.total_jpy, createdAt=order.created_at)
 
 
@@ -1084,13 +1136,34 @@ def admin_change_order_status(
     return admin_get_order(order_id, session)
 
 
+@app.get("/api/orders/recent", response_model=list[ProductOrderSummaryOut])
+def public_list_recent_orders(
+    limit: int = 50,
+    session: Session = Depends(get_session_dep),
+) -> list[ProductOrderSummaryOut]:
+    lim = max(1, min(100, limit))
+    rows = session.exec(
+        select(Order)
+        .where(Order.shipping_status != "delivered")
+        .order_by(Order.ordered_at.desc())
+        .limit(lim)
+    ).all()
+    return [
+        _order_summary_with_image(session, o)
+        for o in rows
+    ]
+
+
 @app.get("/api/orders/{order_id}", response_model=PublicOrderOut)
 def public_get_order(order_id: str, session: Session = Depends(get_session_dep)) -> PublicOrderOut:
     o = session.get(Order, order_id)
     if o is None:
+        o = session.exec(select(Order).where(Order.order_no == order_id)).first()
+    if o is None:
         raise HTTPException(status_code=404, detail="주문을 찾을 수 없어요.")
     _ensure_order_defaults(o)
-    order_items = session.exec(select(OrderItem).where(OrderItem.order_id == order_id)).all()
+    resolved_order_id = o.id
+    order_items = session.exec(select(OrderItem).where(OrderItem.order_id == resolved_order_id)).all()
     def _first_img(pid: str) -> str:
         imgs = _product_images(session, pid)
         return imgs[0].url if imgs else ""
@@ -1100,7 +1173,7 @@ def public_get_order(order_id: str, session: Session = Depends(get_session_dep))
         orderedAt=o.ordered_at,
         totalJpy=o.total_jpy,
         orderStatus=o.order_status,
-        productionSteps=_production_steps(session, order_id),
+        productionSteps=_production_steps(session, resolved_order_id),
         items=[
             {
                 "productId": it.product_id,
@@ -1135,16 +1208,8 @@ def list_product_orders(
         .order_by(Order.ordered_at.desc())
         .limit(lim)
     ).all()
-    for o in rows:
-        _ensure_order_defaults(o)
     return [
-        ProductOrderSummaryOut(
-            id=o.id,
-            orderNo=o.order_no,
-            orderedAt=o.ordered_at,
-            totalJpy=o.total_jpy,
-            orderStatus=o.order_status,
-        )
+        _order_summary_with_image(session, o, product_id=product_id)
         for o in rows
     ]
 
@@ -1153,8 +1218,10 @@ def list_product_orders(
 def public_list_production_steps(order_id: str, session: Session = Depends(get_session_dep)) -> list[ProductionStepOut]:
     o = session.get(Order, order_id)
     if o is None:
+        o = session.exec(select(Order).where(Order.order_no == order_id)).first()
+    if o is None:
         raise HTTPException(status_code=404, detail="주문을 찾을 수 없어요.")
-    return _production_steps(session, order_id)
+    return _production_steps(session, o.id)
 
 
 @app.post("/api/admin/orders/{order_id}/production-steps", response_model=list[ProductionStepOut])

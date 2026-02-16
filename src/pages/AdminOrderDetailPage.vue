@@ -39,10 +39,10 @@ const form = reactive({
 /**
  * 금액 포맷팅 함수
  * @param v 금액 (숫자)
- * @returns '¥1,000' 형식의 문자열
+ * @returns '1,000' 형식의 문자열
  */
 function money(v: number) {
-  return `¥${v.toLocaleString()}`
+  return v.toLocaleString()
 }
 
 /**
@@ -185,7 +185,9 @@ onMounted(() => {
             </div>
             <div class="text-right">
               <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">총액</div>
-              <div class="mt-1 text-xl font-semibold">{{ money(order.totalJpy) }}</div>
+              <div class="mt-1 text-xl font-semibold">
+                {{ money(order.totalJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
+              </div>
             </div>
           </div>
 
@@ -257,9 +259,13 @@ onMounted(() => {
               <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
                 <tr v-for="it in order.items" :key="it.id">
                   <td class="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{{ it.productName }}</td>
-                  <td class="px-4 py-3 text-right">{{ money(it.unitPriceJpy) }}</td>
+                  <td class="px-4 py-3 text-right">
+                    {{ money(it.unitPriceJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
+                  </td>
                   <td class="px-4 py-3 text-right">{{ it.qty }}</td>
-                  <td class="px-4 py-3 text-right font-semibold">{{ money(it.lineTotalJpy) }}</td>
+                  <td class="px-4 py-3 text-right font-semibold">
+                    {{ money(it.lineTotalJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
+                  </td>
                 </tr>
               </tbody>
             </table>
