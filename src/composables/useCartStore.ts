@@ -1,10 +1,8 @@
 import { computed, reactive } from 'vue'
-import { api } from '@/lib/api'
+import { ApiError, api } from '@/lib/api'
 import type { Cart } from '@/lib/types'
 
 type CartStatus = 'idle' | 'loading' | 'ready' | 'error'
-
-const MAX_CART_ITEM_QTY = 4
 
 const state = reactive<{
   status: CartStatus
@@ -28,45 +26,40 @@ async function refresh() {
   }
 }
 
+function apiErrorMessage(e: unknown, fallback: string) {
+  if (e instanceof ApiError) {
+    const body = e.body as { detail?: unknown } | undefined
+    if (body && typeof body.detail === 'string') return body.detail
+    return e.message || fallback
+  }
+  if (e instanceof Error) return e.message
+  return fallback
+}
+
 async function add(productId: string, qty = 1) {
   state.error = null
-  const existing = state.cart?.items.find((it) => it.product.id === productId)
-  const remaining = MAX_CART_ITEM_QTY - (existing?.qty ?? 0)
-  if (remaining <= 0) {
-    state.status = 'ready'
-    state.error = '한가지 모델은 최대 4개까지만 담을 수 있어요.'
-    return
-  }
-  const nextQty = Math.min(qty, remaining)
-  if (nextQty < qty) {
-    state.error = '한가지 모델은 최대 4개까지만 담을 수 있어요.'
-  }
   try {
-    state.cart = await api.addToCart(productId, nextQty)
+    state.cart = await api.addToCart(productId, qty)
     state.status = 'ready'
   } catch (e) {
     state.status = 'error'
-    state.error = e instanceof Error ? e.message : '장바구니 담기에 실패했어요.'
+    state.error = apiErrorMessage(e, '장바구니 담기에 실패했어요.')
   }
 }
 
 async function setQty(itemId: string, qty: number) {
   state.error = null
   const item = state.cart?.items.find((it) => it.id === itemId)
-  const nextQty = Math.max(1, Math.min(qty, MAX_CART_ITEM_QTY))
-  if (nextQty < qty) {
-    state.error = '한가지 모델은 최대 4개까지만 담을 수 있어요.'
-  }
-  if (item && nextQty === item.qty) {
+  if (item && qty === item.qty) {
     state.status = 'ready'
     return
   }
   try {
-    state.cart = await api.updateCartItemQty(itemId, nextQty)
+    state.cart = await api.updateCartItemQty(itemId, qty)
     state.status = 'ready'
   } catch (e) {
     state.status = 'error'
-    state.error = e instanceof Error ? e.message : '수량 변경에 실패했어요.'
+    state.error = apiErrorMessage(e, '수량 변경에 실패했어요.')
   }
 }
 
