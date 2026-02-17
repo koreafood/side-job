@@ -87,10 +87,21 @@ def init_db() -> None:
         pcols = conn.exec_driver_sql("PRAGMA table_info('product')").fetchall()
         pexisting = {row[1] for row in pcols}
         palters: list[str] = []
+        if "price_jpy" in pexisting:
+            try:
+                conn.execute(text('ALTER TABLE "product" DROP COLUMN price_jpy'))
+            except Exception:
+                pass
         if "details_html" not in pexisting:
             palters.append("ALTER TABLE \"product\" ADD COLUMN details_html TEXT")
         if "published" not in pexisting:
             palters.append("ALTER TABLE \"product\" ADD COLUMN published INTEGER DEFAULT 1")
+        if "packaging_fee" not in pexisting:
+            palters.append("ALTER TABLE \"product\" ADD COLUMN packaging_fee INTEGER DEFAULT 0")
+        if "base_price" not in pexisting:
+            palters.append("ALTER TABLE \"product\" ADD COLUMN base_price INTEGER DEFAULT 0")
+        if "add_price" not in pexisting:
+            palters.append("ALTER TABLE \"product\" ADD COLUMN add_price INTEGER DEFAULT 0")
         for stmt in palters:
             conn.execute(text(stmt))
 

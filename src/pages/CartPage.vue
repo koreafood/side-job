@@ -32,6 +32,23 @@ const form = reactive({
 /** 장바구니 아이템 목록 (Computed) */
 const items = computed(() => cart.state.cart?.items ?? [])
 
+const totalProductAmount = computed(() =>
+  items.value.reduce((acc, it) => {
+    if (it.qty <= 0) return acc
+    const base = it.product.basePrice
+    const add = it.product.addPrice
+    const packaging = it.product.packagingFee
+    const lineTotal =
+      it.qty === 1 ? base + packaging : base + (it.qty - 1) * add + packaging
+    return acc + lineTotal
+  }, 0),
+)
+
+const configuredFee = Number(import.meta.env?.VITE_DELIVERY_FEE ?? 3200)
+const defaultFee = Number.isFinite(configuredFee) ? configuredFee : 3200
+const deliveryFee = computed(() => (totalProductAmount.value >= 60000 ? 0 : defaultFee))
+const grandTotal = computed(() => totalProductAmount.value + deliveryFee.value)
+
 function money(v: number) {
   return v.toLocaleString()
 }
@@ -147,7 +164,30 @@ onMounted(() => {
               {{ it.product.name }}
             </button>
             <div class="mt-1 text-sm font-semibold">
-              {{ money(it.product.priceJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
+              {{ money(it.product.basePrice) }}<span class="ml-0.5 text-[0.75em]">원</span>
+            </div>
+            <div class="mt-2 space-y-1 text-xs text-zinc-600 dark:text-zinc-300">
+              <div>기본가격: {{ money(it.product.basePrice) }}원</div>
+              <div>추가가격: {{ money(it.product.addPrice) }}원</div>
+              <div>포장비: {{ money(it.product.packagingFee) }}원</div>
+              <div class="text-zinc-500 dark:text-zinc-400">
+                계산:
+                {{
+                  it.qty === 1
+                    ? `${money(it.product.basePrice)} + ${money(it.product.packagingFee)}`
+                    : `${money(it.product.basePrice)} + (${it.qty - 1} × ${money(it.product.addPrice)}) + ${money(
+                        it.product.packagingFee,
+                      )}`
+                }}
+                =
+                {{
+                  money(
+                    it.qty === 1
+                      ? it.product.basePrice + it.product.packagingFee
+                      : it.product.basePrice + (it.qty - 1) * it.product.addPrice + it.product.packagingFee,
+                  )
+                }}원
+              </div>
             </div>
             <div class="mt-3 flex items-center gap-2">
               <button
@@ -275,9 +315,21 @@ onMounted(() => {
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div class="flex items-center justify-between">
-            <div class="text-sm font-semibold">총액</div>
-            <div class="text-lg font-semibold">
-              {{ money(cart.totalJpy.value) }}<span class="ml-0.5 text-[0.75em]">원</span>
+            <div class="text-sm font-semibold">상품 합계</div>
+            <div class="text-sm font-semibold">
+              {{ money(totalProductAmount) }}<span class="ml-0.5 text-[0.75em]">원</span>
+            </div>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-sm">
+            <div class="font-semibold text-zinc-600 dark:text-zinc-300">배송비</div>
+            <div class="font-semibold">
+              {{ money(deliveryFee) }}<span class="ml-0.5 text-[0.75em]">원</span>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between border-t border-zinc-200 pt-3 text-lg font-semibold dark:border-zinc-800">
+            <div>총액</div>
+            <div>
+              {{ money(grandTotal) }}<span class="ml-0.5 text-[0.75em]">원</span>
             </div>
           </div>
           <button

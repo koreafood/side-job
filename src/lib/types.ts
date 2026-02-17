@@ -36,7 +36,9 @@ export type Product = {
   name: string
   description: string
   detailsHtml: string
-  priceJpy: number
+  packagingFee: number
+  basePrice: number
+  addPrice: number
   images: ProductImage[]
   published: boolean
 }

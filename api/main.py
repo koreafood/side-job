@@ -80,7 +80,7 @@ from api.seed import seed_if_empty
 
 app = FastAPI()
 
-MAX_CART_ITEMS = 5
+MAX_CART_ITEM_QTY = 4
 
 if os.getenv("VERCEL") == "1":
     UPLOAD_DIR = Path("/tmp") / "uploads"
@@ -297,7 +297,9 @@ def _product_out(session: Session, p: Product) -> ProductOut:
         name=p.name,
         description=p.description,
         detailsHtml=_abs_in_html(p.details_html or ""),
-        priceJpy=p.price_jpy,
+        packagingFee=p.packaging_fee,
+        basePrice=p.base_price,
+        addPrice=p.add_price,
         images=_product_images(session, p.id),
         published=p.published,
     )
@@ -652,7 +654,9 @@ def create_admin_product(body: ProductCreateIn, session: Session = Depends(get_s
         name=body.name,
         description=body.description,
         details_html=_rewrite_details_html(body.detailsHtml, product_id),
-        price_jpy=body.priceJpy,
+        packaging_fee=body.packagingFee,
+        base_price=body.basePrice,
+        add_price=body.addPrice,
         published=body.published,
     )
     session.add(p)
@@ -691,7 +695,9 @@ def update_admin_product(
     p.name = body.name
     p.description = body.description
     p.details_html = _rewrite_details_html(body.detailsHtml, product_id)
-    p.price_jpy = body.priceJpy
+    p.packaging_fee = body.packagingFee
+    p.base_price = body.basePrice
+    p.add_price = body.addPrice
     p.published = body.published
     session.add(p)
 
@@ -824,19 +830,17 @@ def add_cart_item(
         raise HTTPException(status_code=404, detail="상품을 찾을 수 없어요.")
 
     cart = _ensure_cart(session, response, cart_id)
-    items = session.exec(select(CartItem).where(CartItem.cart_id == cart.id)).all()
-    total_qty = sum(it.qty for it in items)
-    remaining = MAX_CART_ITEMS - total_qty
-    if remaining <= 0:
-        raise HTTPException(status_code=400, detail="장바구니에는 최대 5개까지만 담을 수 있어요.")
     existing = session.exec(
         select(CartItem).where(
             (CartItem.cart_id == cart.id) & (CartItem.product_id == input.productId)
         )
     ).first()
+    remaining = MAX_CART_ITEM_QTY - (existing.qty if existing else 0)
+    if remaining <= 0:
+        raise HTTPException(status_code=400, detail="한가지 모델은 최대 4개까지만 담을 수 있어요.")
     add_qty = min(input.qty, remaining)
     if add_qty <= 0:
-        raise HTTPException(status_code=400, detail="장바구니에는 최대 5개까지만 담을 수 있어요.")
+        raise HTTPException(status_code=400, detail="한가지 모델은 최대 4개까지만 담을 수 있어요.")
 
     if existing is None:
         item = CartItem(
@@ -866,12 +870,10 @@ def update_cart_item_qty(
     item = session.get(CartItem, item_id)
     if item is None or item.cart_id != cart.id:
         raise HTTPException(status_code=404, detail="장바구니 항목을 찾을 수 없어요.")
-    items = session.exec(select(CartItem).where(CartItem.cart_id == cart.id)).all()
-    other_total = sum(it.qty for it in items if it.id != item.id)
     if input.qty < 1:
         raise HTTPException(status_code=400, detail="수량은 1개 이상이어야 해요.")
-    if input.qty > MAX_CART_ITEMS or other_total + input.qty > MAX_CART_ITEMS:
-        raise HTTPException(status_code=400, detail="장바구니에는 최대 5개까지만 담을 수 있어요.")
+    if input.qty > MAX_CART_ITEM_QTY:
+        raise HTTPException(status_code=400, detail="한가지 모델은 최대 4개까지만 담을 수 있어요.")
     item.qty = input.qty
     session.add(item)
     session.commit()
@@ -934,14 +936,14 @@ def create_order(
         p = product_map.get(it.product_id)
         if p is None:
             continue
-        total += it.qty * p.price_jpy
+        total += it.qty * p.base_price
         order_items.append(
             OrderItem(
                 id=f"oi_{uuid4().hex}",  # 주문 아이템 고유 ID
                 order_id="",            # 생성 후 주문 ID로 채움
                 product_id=p.id,
                 product_name=p.name,
-                unit_price_jpy=p.price_jpy,
+                unit_price_jpy=p.base_price,
                 qty=it.qty,
             )
         )

@@ -28,7 +28,9 @@ class ProductOut(BaseModel):
     name: str
     description: str
     detailsHtml: str
-    priceJpy: int
+    packagingFee: int
+    basePrice: int
+    addPrice: int
     images: list[ProductImageOut]
     published: bool
 
@@ -43,7 +45,9 @@ class ProductCreateIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     description: str = Field(max_length=4000)
     detailsHtml: str = Field(default="", max_length=20000)
-    priceJpy: int = Field(ge=0, le=10_000_000)
+    packagingFee: int = Field(ge=0, le=10_000_000)
+    basePrice: int = Field(ge=0, le=10_000_000)
+    addPrice: int = Field(ge=0, le=10_000_000)
     images: list[ProductImageCreateIn] = Field(min_length=1, max_length=20)
     published: bool = True
 

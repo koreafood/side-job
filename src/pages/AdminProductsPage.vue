@@ -121,7 +121,7 @@ onMounted(() => {
               </a>
             </td>
             <td class="p-2">{{ p.name }}</td>
-            <td class="p-2">{{ nf.format(p.priceJpy) }}</td>
+            <td class="p-2">{{ nf.format(p.basePrice) }}</td>
             <td class="p-2">
               <span v-if="p.published">전시중</span>
               <span v-else>전시중지</span>

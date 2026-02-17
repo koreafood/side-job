@@ -200,7 +200,7 @@ onMounted(() => {
       <aside class="space-y-4">
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div class="text-2xl font-semibold">
-            {{ product.priceJpy.toLocaleString() }}<span class="ml-0.5 text-[0.75em]">원</span>
+            {{ product.basePrice.toLocaleString() }}<span class="ml-0.5 text-[0.75em]">원</span>
           </div>
           <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">데모: 배송/결제는 생략돼요.</p>
 

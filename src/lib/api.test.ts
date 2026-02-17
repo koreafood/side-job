@@ -71,7 +71,9 @@ describe('api', () => {
           sellerName: 'S',
           name: 'N',
           description: 'D',
-          priceJpy: 1,
+          packagingFee: 0,
+          basePrice: 1,
+          addPrice: 1,
           images: [],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -83,7 +85,9 @@ describe('api', () => {
       sellerId: 's1',
       name: 'N',
       description: 'D',
-      priceJpy: 1,
+      packagingFee: 0,
+      basePrice: 1,
+      addPrice: 1,
       images: [{ url: 'u', sort: 1 }],
     })
 
@@ -124,7 +128,9 @@ describe('api', () => {
           sellerName: 'S',
           name: 'N',
           description: 'D',
-          priceJpy: 1,
+          packagingFee: 0,
+          basePrice: 1,
+          addPrice: 1,
           images: [],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -136,7 +142,9 @@ describe('api', () => {
       sellerId: 's1',
       name: 'N',
       description: 'D',
-      priceJpy: 1,
+      packagingFee: 0,
+      basePrice: 1,
+      addPrice: 1,
       images: [{ url: 'u', sort: 1 }],
     })
 

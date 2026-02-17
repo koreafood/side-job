@@ -63,7 +63,9 @@ def seed_if_empty(session: Session) -> None:
             seller_name=seller_name,
             name="오쿠치의 랩 스커트",
             description="핸드메이드 랩 스커트입니다.\n\n가벼운 착용감과 탄탄한 마감으로 데일리로 입기 좋아요.\n무늬는 해마다 조금씩 바뀝니다.",
-            price_jpy=2000,
+            packaging_fee=0,
+            base_price=2000,
+            add_price=1500,
             created_at=datetime.utcnow(),
         )
 

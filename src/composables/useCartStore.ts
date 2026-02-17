@@ -4,7 +4,7 @@ import type { Cart } from '@/lib/types'
 
 type CartStatus = 'idle' | 'loading' | 'ready' | 'error'
 
-const MAX_CART_ITEMS = 5
+const MAX_CART_ITEM_QTY = 4
 
 const state = reactive<{
   status: CartStatus
@@ -15,8 +15,6 @@ const state = reactive<{
   cart: null,
   error: null,
 })
-
-const getTotalQty = () => state.cart?.items.reduce((acc, it) => acc + it.qty, 0) ?? 0
 
 async function refresh() {
   state.status = 'loading'
@@ -32,15 +30,16 @@ async function refresh() {
 
 async function add(productId: string, qty = 1) {
   state.error = null
-  const remaining = MAX_CART_ITEMS - getTotalQty()
+  const existing = state.cart?.items.find((it) => it.product.id === productId)
+  const remaining = MAX_CART_ITEM_QTY - (existing?.qty ?? 0)
   if (remaining <= 0) {
     state.status = 'ready'
-    state.error = '장바구니에는 최대 5개까지만 담을 수 있어요.'
+    state.error = '한가지 모델은 최대 4개까지만 담을 수 있어요.'
     return
   }
   const nextQty = Math.min(qty, remaining)
   if (nextQty < qty) {
-    state.error = '장바구니에는 최대 5개까지만 담을 수 있어요.'
+    state.error = '한가지 모델은 최대 4개까지만 담을 수 있어요.'
   }
   try {
     state.cart = await api.addToCart(productId, nextQty)
@@ -54,16 +53,9 @@ async function add(productId: string, qty = 1) {
 async function setQty(itemId: string, qty: number) {
   state.error = null
   const item = state.cart?.items.find((it) => it.id === itemId)
-  const baseTotal = getTotalQty() - (item?.qty ?? 0)
-  const remaining = MAX_CART_ITEMS - baseTotal
-  if (remaining <= 0) {
-    state.status = 'ready'
-    state.error = '장바구니에는 최대 5개까지만 담을 수 있어요.'
-    return
-  }
-  const nextQty = Math.max(1, Math.min(qty, remaining))
+  const nextQty = Math.max(1, Math.min(qty, MAX_CART_ITEM_QTY))
   if (nextQty < qty) {
-    state.error = '장바구니에는 최대 5개까지만 담을 수 있어요.'
+    state.error = '한가지 모델은 최대 4개까지만 담을 수 있어요.'
   }
   if (item && nextQty === item.qty) {
     state.status = 'ready'
@@ -114,7 +106,7 @@ export function useCartStore() {
   
   const totalJpy = computed(
     () =>
-      state.cart?.items.reduce((acc, it) => acc + it.qty * it.product.priceJpy, 0) ?? 0,
+      state.cart?.items.reduce((acc, it) => acc + it.qty * it.product.basePrice, 0) ?? 0,
   )
 
   return {

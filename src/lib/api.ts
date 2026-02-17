@@ -163,7 +163,9 @@ export const api = {
     name: string
     description: string
     detailsHtml?: string
-    priceJpy: number
+    packagingFee: number
+    basePrice: number
+    addPrice: number
     images: { url: string; sort: number }[]
     published?: boolean
   }) =>
@@ -184,7 +186,9 @@ export const api = {
       name: string
       description: string
       detailsHtml?: string
-      priceJpy: number
+      packagingFee: number
+      basePrice: number
+      addPrice: number
       images: { url: string; sort: number }[]
       published?: boolean
     },

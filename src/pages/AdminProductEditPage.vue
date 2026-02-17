@@ -48,7 +48,9 @@ const form = reactive({
   name: '',
   description: '',
   detailsHtml: '',
-  priceJpy: 0,
+  packagingFee: 0,
+  basePrice: 0,
+  addPrice: 0,
   published: true,
 })
 
@@ -56,8 +58,12 @@ const form = reactive({
 const canSubmit = computed(() => {
   if (!form.sellerId.trim()) return false
   if (!form.name.trim()) return false
-  const price = Number(form.priceJpy)
-  if (!Number.isFinite(price) || price < 0) return false
+  const packaging = Number(form.packagingFee)
+  if (!Number.isFinite(packaging) || packaging < 0) return false
+  const base = Number(form.basePrice)
+  if (!Number.isFinite(base) || base < 0) return false
+  const add = Number(form.addPrice)
+  if (!Number.isFinite(add) || add < 0) return false
   const hasAnyImage = existingImageUrls.value.length > 0 || localImages.value.length > 0
   return hasAnyImage
 })
@@ -166,7 +172,9 @@ async function load() {
     form.description = p.description
     form.detailsHtml = p.detailsHtml || ''
     setEditorContent(form.detailsHtml)
-    form.priceJpy = p.priceJpy
+    form.packagingFee = p.packagingFee
+    form.basePrice = p.basePrice
+    form.addPrice = p.addPrice
     form.published = p.published
     existingImageUrls.value = p.images.map((it) => it.url)
     coverUrl.value = existingImageUrls.value[0] ?? null
@@ -209,7 +217,9 @@ async function submit() {
       name: form.name.trim(),
       description: form.description.trim(),
       detailsHtml: form.detailsHtml,
-      priceJpy: Number(form.priceJpy),
+      packagingFee: Number(form.packagingFee),
+      basePrice: Number(form.basePrice),
+      addPrice: Number(form.addPrice),
       images,
       published: form.published,
     })
@@ -324,11 +334,33 @@ onUnmounted(() => {
               <option v-for="s in sellers" :key="s.id" :value="s.id">{{ s.name }}</option>
             </select>
           </label>
+        </div>
 
+        <div class="grid gap-4 sm:grid-cols-3">
           <label class="space-y-1">
-            <div class="text-sm font-medium">가격(JPY)</div>
+            <div class="text-sm font-medium">포장비</div>
             <input
-              v-model.number="form.priceJpy"
+              v-model.number="form.packagingFee"
+              type="number"
+              min="0"
+              step="1"
+              class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
+            />
+          </label>
+          <label class="space-y-1">
+            <div class="text-sm font-medium">기본가격</div>
+            <input
+              v-model.number="form.basePrice"
+              type="number"
+              min="0"
+              step="1"
+              class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
+            />
+          </label>
+          <label class="space-y-1">
+            <div class="text-sm font-medium">추가가격</div>
+            <input
+              v-model.number="form.addPrice"
               type="number"
               min="0"
               step="1"
