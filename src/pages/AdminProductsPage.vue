@@ -51,7 +51,7 @@ onMounted(() => {
     <!-- 페이지 헤더 및 액션 -->
     <div class="flex items-end justify-between gap-4">
       <div>
-        <h1 class="text-lg font-semibold">상품 목록</h1>
+        <h1 class="text-lg font-semibold">작품 목록</h1>
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">전시여부 필터로 목록을 확인하세요.</p>
       </div>
       <div class="flex items-center gap-2">
@@ -79,7 +79,7 @@ onMounted(() => {
           class="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
           @click="$router.push({ name: 'admin-product-new' })"
         >
-          상품등록
+          작품등록
         </button>
       </div>
     </div>

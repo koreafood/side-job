@@ -121,7 +121,7 @@ onMounted(() => {
         v-if="admin.isAdmin.value"
       >
         <Plus class="h-4 w-4" />
-        <span class="hidden sm:inline">상품목록</span>
+        <span class="hidden sm:inline">작품목록</span>
       </button>
 
       <!-- 관리자용: 주문 관리 버튼 (로그인 시만 노출) -->
