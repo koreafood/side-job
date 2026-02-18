@@ -135,7 +135,7 @@ onMounted(() => {
           <div class="text-sm font-semibold">상세정보</div>
           <div
             v-if="product.detailsHtml && product.detailsHtml.trim()"
-            class="mt-4 text-sm leading-6"
+            class="mt-4 text-sm leading-6 prose prose-sm max-w-none"
             v-html="product.detailsHtml"
           />
           <div v-else class="mt-4 text-sm text-zinc-600 dark:text-zinc-300">상세정보가 없어요.</div>
@@ -158,9 +158,12 @@ onMounted(() => {
             연결된 주문이 없어요.
           </div>
 
-          <div v-else class="mt-4 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
-            <div class="overflow-x-auto">
-              <table class="w-full min-w-[640px] text-sm">
+          <div
+            v-else
+            class="mt-4 w-full max-w-[560px] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800"
+          >
+            <div class="overflow-x-hidden">
+              <table class="w-full text-sm">
                 <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
                   <tr>
                     <th class="px-4 py-3 text-left font-semibold">주문상세 번호</th>
