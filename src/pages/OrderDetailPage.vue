@@ -199,7 +199,7 @@ watch(
       </div>
 
       <div
-        v-if="(order.items?.length ?? 0) > 0"
+        v-if="order.orderStatus === 'delivered' && (order.items?.length ?? 0) > 0"
         class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
       >
         <div class="text-sm font-semibold">구매자 리뷰 작성</div>
