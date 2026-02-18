@@ -66,7 +66,7 @@ onMounted(() => {
       <!-- 로고 -->
       <button
         type="button"
-        class="text-lg font-semibold tracking-tight"
+        class="text-2xl font-semibold tracking-tight"
         @click="$router.push({ name: 'home' })"
       >
         라라원단
