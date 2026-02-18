@@ -71,6 +71,7 @@ from api.schemas import (
     ProductImageOut,
     ProductOut,
     ReviewCreateIn,
+    ReviewDeleteIn,
     ReviewOut,
     ReviewPhotoOut,
     SellerOut,
@@ -855,6 +856,49 @@ def create_review(
         createdAt=r.created_at,
         photos=_review_photos(session, r.id),
     )
+
+
+@app.delete("/api/products/{product_id}/reviews/{review_id}")
+def delete_review(
+    product_id: str,
+    review_id: str,
+    body: ReviewDeleteIn,
+    session: Session = Depends(get_session_dep),
+) -> Response:
+    if session.get(Product, product_id) is None:
+        raise HTTPException(status_code=404, detail="상품을 찾을 수 없어요.")
+    review = session.get(Review, review_id)
+    if review is None or review.product_id != product_id:
+        raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없어요.")
+    o = session.get(Order, body.orderId)
+    if o is None:
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없어요.")
+    item = session.exec(
+        select(OrderItem).where((OrderItem.order_id == body.orderId) & (OrderItem.product_id == product_id))
+    ).first()
+    if item is None:
+        raise HTTPException(status_code=400, detail="해당 주문에 이 상품이 없어요.")
+    def norm_name(v: str) -> str:
+        return "".join((v or "").split())
+    name = norm_name(body.authorName)
+    if not name:
+        raise HTTPException(status_code=400, detail="주문자명을 입력해 주세요.")
+    if name != norm_name(o.customer_name):
+        raise HTTPException(status_code=401, detail="주문자명 인증에 실패했어요.")
+    def last4(v: str) -> str:
+        d = "".join(ch for ch in v if ch.isdigit())
+        return d[-4:] if len(d) >= 4 else d
+    ph4 = last4(body.phoneLast4.strip())
+    if ph4 != last4(o.customer_phone) and ph4 != last4(o.recipient_phone):
+        raise HTTPException(status_code=401, detail="전화번호 인증에 실패했어요.")
+    if review.author_name != _mask_korean_name(o.customer_name):
+        raise HTTPException(status_code=401, detail="리뷰 삭제 권한이 없어요.")
+    photos = session.exec(select(ReviewPhoto).where(ReviewPhoto.review_id == review_id)).all()
+    for p in photos:
+        session.delete(p)
+    session.delete(review)
+    session.commit()
+    return Response(status_code=204)
 
 
 @app.get("/api/cart", response_model=CartOut)

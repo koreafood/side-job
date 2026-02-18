@@ -7,12 +7,13 @@
  *   - 제작 단계 타임라인(ProductionStepsTimeline) 표시
  * - 의존성: vue, vue-router, @/lib/api.ts
  */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, ApiError } from '@/lib/api'
-import type { PublicOrderDetail } from '@/lib/types'
+import type { PublicOrderDetail, Review } from '@/lib/types'
 import ProductionStepsTimeline from '@/components/ProductionStepsTimeline.vue'
 import ReviewForm from '@/components/ReviewForm.vue'
+import ReviewList from '@/components/ReviewList.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,6 +24,9 @@ const status = ref<'idle' | 'loading' | 'error' | 'ready'>('idle')
 const error = ref<string | null>(null)
 const order = ref<PublicOrderDetail | null>(null)
 const selectedProductId = ref<string>('')
+const reviews = ref<Review[]>([])
+const reviewStatus = ref<'idle' | 'loading' | 'error'>('idle')
+const reviewError = ref<string | null>(null)
 
 function money(v: number) {
   return v.toLocaleString()
@@ -74,9 +78,41 @@ async function load() {
   }
 }
 
+async function loadReviews(productId: string) {
+  reviewStatus.value = 'loading'
+  reviewError.value = null
+  try {
+    reviews.value = await api.listReviews(productId)
+    reviewStatus.value = 'idle'
+  } catch (e) {
+    reviewStatus.value = 'error'
+    reviewError.value = apiErrorMessage(e, '리뷰를 불러오지 못했어요.')
+  }
+}
+
+function onReviewCreated(review: Review) {
+  if (review.productId !== selectedProductId.value) return
+  reviews.value = [review, ...reviews.value.filter((it) => it.id !== review.id)]
+}
+
+function onReviewDeleted(reviewId: string) {
+  reviews.value = reviews.value.filter((it) => it.id !== reviewId)
+}
+
 onMounted(() => {
   void load()
 })
+
+watch(
+  () => selectedProductId.value,
+  (value) => {
+    if (!value) {
+      reviews.value = []
+      return
+    }
+    void loadReviews(value)
+  },
+)
 </script>
 
 <template>
@@ -144,6 +180,25 @@ onMounted(() => {
       <ProductionStepsTimeline :steps="order.productionSteps" />
 
       <div
+        v-if="selectedProductId"
+        class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+      >
+        <div class="text-sm font-semibold">구매자 리뷰</div>
+        <div v-if="reviewStatus === 'loading'" class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+          리뷰를 불러오는 중이에요.
+        </div>
+        <div v-else-if="reviewStatus === 'error'" class="mt-3 text-sm text-rose-600">
+          {{ reviewError }}
+        </div>
+        <div v-else-if="reviews.length === 0" class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+          등록된 리뷰가 없어요.
+        </div>
+        <div v-else class="mt-4">
+          <ReviewList :reviews="reviews" :order-id="order.id" allow-delete @deleted="onReviewDeleted" />
+        </div>
+      </div>
+
+      <div
         v-if="(order.items?.length ?? 0) > 0"
         class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
       >
@@ -163,6 +218,7 @@ onMounted(() => {
             :product-id="selectedProductId"
             :order-id="order.id"
             :masked-name="order.customerMaskedName"
+            @created="onReviewCreated"
           />
         </div>
       </div>

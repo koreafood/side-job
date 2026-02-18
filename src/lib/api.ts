@@ -412,6 +412,21 @@ export const api = {
     }),
 
   /** 
+   * 리뷰 삭제 
+   * - 입력: productId, reviewId, 삭제 인증 정보
+   * - 반환: 없음
+   */
+  deleteReview: (
+    productId: string,
+    reviewId: string,
+    input: { authorName: string; orderId: string; phoneLast4: string },
+  ) =>
+    apiFetch<void>(`/api/products/${encodeURIComponent(productId)}/reviews/${encodeURIComponent(reviewId)}`, {
+      method: 'DELETE',
+      body: JSON.stringify(input),
+    }),
+
+  /** 
    * 장바구니 조회 
    * - 반환: Cart
    */
