@@ -36,9 +36,7 @@ defineProps<{
       <div class="text-sm font-semibold">
         {{ product.basePrice.toLocaleString() }}<span class="ml-0.5 text-[0.75em]">원</span>
       </div>
-      <div class="text-xs text-zinc-500 dark:text-zinc-400">
-        판매자: {{ product.sellerName }}
-      </div>
+    
     </div>
   </button>
 </template>
