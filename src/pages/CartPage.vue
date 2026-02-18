@@ -120,15 +120,25 @@ onMounted(() => {
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-lg font-semibold">장바구니</h1>
-      <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">담은 상품을 확인하고 주문을 생성할 수 있어요.</p>
+      <h1 class="text-lg font-semibold">
+        장바구니
+      </h1>
+      <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        담은 상품을 확인하고 주문을 생성할 수 있어요.
+      </p>
     </div>
 
-    <div v-if="cart.state.error" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="cart.state.error"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       {{ cart.state.error }}
     </div>
 
-    <div v-if="orderMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+    <div
+      v-if="orderMessage"
+      class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
+    >
       <div>{{ orderMessage }}</div>
       <button
         v-if="orderId"
@@ -140,9 +150,15 @@ onMounted(() => {
       </button>
     </div>
 
-    <div v-if="cart.state.status === 'loading'" class="h-[260px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
+    <div
+      v-if="cart.state.status === 'loading'"
+      class="h-[260px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+    />
 
-    <div v-else class="grid gap-6 lg:grid-cols-[1fr_320px]">
+    <div
+      v-else
+      class="grid gap-6 lg:grid-cols-[1fr_320px]"
+    >
       <section class="space-y-3">
         <div
           v-for="it in items"
@@ -154,7 +170,7 @@ onMounted(() => {
             :alt="it.product.name"
             class="h-20 w-20 rounded-xl object-cover"
             loading="lazy"
-          />
+          >
           <div class="min-w-0 flex-1">
             <button
               type="button"
@@ -176,8 +192,8 @@ onMounted(() => {
                   it.qty === 1
                     ? `${money(it.product.basePrice)} + ${money(it.product.packagingFee)}`
                     : `${money(it.product.basePrice)} + (${it.qty - 1} × ${money(it.product.addPrice)}) + ${money(
-                        it.product.packagingFee,
-                      )}`
+                      it.product.packagingFee,
+                    )}`
                 }}
                 =
                 {{
@@ -197,7 +213,9 @@ onMounted(() => {
               >
                 -
               </button>
-              <div class="w-10 text-center text-sm font-semibold">{{ it.qty }}</div>
+              <div class="w-10 text-center text-sm font-semibold">
+                {{ it.qty }}
+              </div>
               <button
                 type="button"
                 class="h-9 w-9 rounded-xl border border-zinc-200 text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
@@ -226,7 +244,9 @@ onMounted(() => {
 
       <aside class="space-y-3">
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <div class="text-sm font-semibold">주문 정보</div>
+          <div class="text-sm font-semibold">
+            주문 정보
+          </div>
           <div class="mt-4 grid gap-3">
             <label class="space-y-1">
               <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">주문자</div>
@@ -234,7 +254,7 @@ onMounted(() => {
                 v-model="form.customerName"
                 type="text"
                 class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-              />
+              >
             </label>
 
             <label class="space-y-1">
@@ -244,7 +264,7 @@ onMounted(() => {
                 type="tel"
                 class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
                 placeholder="예) 010-1234-5678"
-              />
+              >
             </label>
 
             <label class="space-y-1">
@@ -255,7 +275,7 @@ onMounted(() => {
                   type="text"
                   readonly
                   class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-                />
+                >
                 <button
                   type="button"
                   class="whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
@@ -273,7 +293,7 @@ onMounted(() => {
                 type="text"
                 class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
                 placeholder="예) 101동 1004호"
-              />
+              >
             </label>
 
             <label class="space-y-1">
@@ -283,7 +303,7 @@ onMounted(() => {
                   v-model="form.recipientName"
                   type="text"
                   class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-                />
+                >
                 <button
                   type="button"
                   class="whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
@@ -301,7 +321,7 @@ onMounted(() => {
                 type="text"
                 class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
                 placeholder="(선택)"
-              />
+              >
             </label>
           </div>
 
@@ -315,13 +335,17 @@ onMounted(() => {
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div class="flex items-center justify-between">
-            <div class="text-sm font-semibold">상품 합계</div>
+            <div class="text-sm font-semibold">
+              상품 합계
+            </div>
             <div class="text-sm font-semibold">
               {{ money(totalProductAmount) }}<span class="ml-0.5 text-[0.75em]">원</span>
             </div>
           </div>
           <div class="mt-2 flex items-center justify-between text-sm">
-            <div class="font-semibold text-zinc-600 dark:text-zinc-300">배송비</div>
+            <div class="font-semibold text-zinc-600 dark:text-zinc-300">
+              배송비
+            </div>
             <div class="font-semibold">
               {{ money(deliveryFee) }}<span class="ml-0.5 text-[0.75em]">원</span>
             </div>

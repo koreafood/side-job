@@ -196,13 +196,18 @@ onUnmounted(() => {
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-lg font-semibold">상품 등록</h1>
+      <h1 class="text-lg font-semibold">
+        상품 등록
+      </h1>
       <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
         내 컴퓨터에서 사진을 업로드해 등록할 수 있어요.
       </p>
     </div>
 
-    <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="status === 'error'"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       {{ error }}
     </div>
 
@@ -219,7 +224,11 @@ onUnmounted(() => {
               v-model="form.sellerId"
               class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
             >
-              <option v-for="s in sellers" :key="s.id" :value="s.id">{{ s.name }}</option>
+              <option
+                v-for="s in sellers"
+                :key="s.id"
+                :value="s.id"
+              >{{ s.name }}</option>
             </select>
           </label>
         </div>
@@ -233,7 +242,7 @@ onUnmounted(() => {
               min="0"
               step="1"
               class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-            />
+            >
           </label>
           <label class="space-y-1">
             <div class="text-sm font-medium">기본가격</div>
@@ -243,7 +252,7 @@ onUnmounted(() => {
               min="0"
               step="1"
               class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-            />
+            >
           </label>
           <label class="space-y-1">
             <div class="text-sm font-medium">추가가격</div>
@@ -253,7 +262,7 @@ onUnmounted(() => {
               min="0"
               step="1"
               class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-            />
+            >
           </label>
         </div>
 
@@ -264,7 +273,7 @@ onUnmounted(() => {
             type="text"
             class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
             placeholder="예) 오쿠치의 랩 스커트"
-          />
+          >
         </label>
 
         <label class="space-y-1">
@@ -278,7 +287,9 @@ onUnmounted(() => {
         </label>
 
         <div class="space-y-2">
-          <div class="text-sm font-medium">상세정보(리치 텍스트)</div>
+          <div class="text-sm font-medium">
+            상세정보(리치 텍스트)
+          </div>
           <div class="rounded-2xl border border-zinc-200 bg-white p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950">
             <div class="mb-2 flex flex-wrap gap-2">
               <button
@@ -323,33 +334,45 @@ onUnmounted(() => {
                 multiple
                 class="sr-only"
                 @change="onPickDetailImages"
-              />
+              >
             </div>
             <EditorContent :editor="editor" />
           </div>
         </div>
 
         <label class="flex items-center gap-2">
-          <input type="checkbox" v-model="form.published" />
+          <input
+            v-model="form.published"
+            type="checkbox"
+          >
           <span class="text-sm">전시 여부 (공개)</span>
         </label>
 
         <div class="space-y-2">
-          <div class="text-sm font-medium">내 컴퓨터 사진</div>
+          <div class="text-sm font-medium">
+            내 컴퓨터 사진
+          </div>
           <input
             type="file"
             accept="image/*"
             multiple
             class="block w-full text-sm"
             @change="onPickFiles"
-          />
-          <div v-if="localImages.length" class="mt-2 grid grid-cols-3 gap-2">
+          >
+          <div
+            v-if="localImages.length"
+            class="mt-2 grid grid-cols-3 gap-2"
+          >
             <div
               v-for="(it, idx) in localImages"
               :key="it.previewUrl"
               class="relative aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
             >
-              <img :src="it.previewUrl" alt="" class="h-full w-full object-cover" />
+              <img
+                :src="it.previewUrl"
+                alt=""
+                class="h-full w-full object-cover"
+              >
               <button
                 type="button"
                 class="absolute right-2 top-2 rounded-lg bg-black/60 px-2 py-1 text-xs font-semibold text-white"
@@ -374,14 +397,20 @@ onUnmounted(() => {
 
       <aside class="space-y-4">
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <div class="text-sm font-medium">미리보기</div>
+          <div class="text-sm font-medium">
+            미리보기
+          </div>
           <div class="mt-3 grid grid-cols-3 gap-2">
             <div
               v-for="it in localImages"
               :key="`local_prev_${it.previewUrl}`"
               class="aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
             >
-              <img :src="it.previewUrl" alt="" class="h-full w-full object-cover" />
+              <img
+                :src="it.previewUrl"
+                alt=""
+                class="h-full w-full object-cover"
+              >
             </div>
           </div>
         </div>

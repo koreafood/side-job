@@ -40,7 +40,10 @@ const filled = computed(() => Math.max(0, Math.min(5, Math.round(props.value))))
         idx <= filled ? 'fill-amber-400 text-amber-400' : 'text-zinc-300 dark:text-zinc-700',
       ]"
     />
-    <span v-if="typeof count === 'number'" class="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
+    <span
+      v-if="typeof count === 'number'"
+      class="ml-1 text-xs text-zinc-500 dark:text-zinc-400"
+    >
       ({{ count }})
     </span>
   </div>

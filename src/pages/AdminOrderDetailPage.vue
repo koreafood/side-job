@@ -152,8 +152,12 @@ onMounted(() => {
   <div class="space-y-6">
     <div class="flex items-end justify-between gap-4">
       <div>
-        <h1 class="text-lg font-semibold">주문 상세</h1>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">주문 정보 확인과 상태 변경을 할 수 있어요.</p>
+        <h1 class="text-lg font-semibold">
+          주문 상세
+        </h1>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          주문 정보 확인과 상태 변경을 할 수 있어요.
+        </p>
       </div>
 
       <button
@@ -165,26 +169,43 @@ onMounted(() => {
       </button>
     </div>
 
-    <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="status === 'error'"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       {{ error }}
     </div>
 
-    <div v-else-if="status === 'loading'" class="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <div
+      v-else-if="status === 'loading'"
+      class="grid gap-6 lg:grid-cols-[1fr_360px]"
+    >
       <div class="h-[520px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
       <div class="h-[520px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
     </div>
 
-    <div v-else-if="order" class="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <div
+      v-else-if="order"
+      class="grid gap-6 lg:grid-cols-[1fr_360px]"
+    >
       <section class="space-y-4">
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">주문번호</div>
-              <div class="mt-1 text-lg font-semibold tracking-tight">{{ order.orderNo }}</div>
-              <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{{ formatDate(order.orderedAt) }}</div>
+              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                주문번호
+              </div>
+              <div class="mt-1 text-lg font-semibold tracking-tight">
+                {{ order.orderNo }}
+              </div>
+              <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+                {{ formatDate(order.orderedAt) }}
+              </div>
             </div>
             <div class="text-right">
-              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">총액</div>
+              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                총액
+              </div>
               <div class="mt-1 text-xl font-semibold">
                 {{ money(order.totalJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
               </div>
@@ -193,76 +214,141 @@ onMounted(() => {
 
           <div class="mt-4 grid gap-2 sm:grid-cols-3">
             <div class="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900/40">
-              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">주문상태</div>
-              <div class="mt-1 font-semibold">{{ label(order.orderStatus) }}</div>
+              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                주문상태
+              </div>
+              <div class="mt-1 font-semibold">
+                {{ label(order.orderStatus) }}
+              </div>
             </div>
             <div class="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900/40">
-              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">결제</div>
-              <div class="mt-1 font-semibold">{{ label(order.paymentStatus) }}</div>
+              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                결제
+              </div>
+              <div class="mt-1 font-semibold">
+                {{ label(order.paymentStatus) }}
+              </div>
             </div>
             <div class="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900/40">
-              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">배송</div>
-              <div class="mt-1 font-semibold">{{ label(order.shippingStatus) }}</div>
+              <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                배송
+              </div>
+              <div class="mt-1 font-semibold">
+                {{ label(order.shippingStatus) }}
+              </div>
             </div>
           </div>
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">
           <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-            <div class="text-sm font-semibold">고객 정보</div>
+            <div class="text-sm font-semibold">
+              고객 정보
+            </div>
             <div class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-200">
               <div class="flex items-center justify-between gap-3">
-                <div class="text-zinc-500 dark:text-zinc-400">주문자</div>
-                <div class="font-medium">{{ order.customerName }}</div>
+                <div class="text-zinc-500 dark:text-zinc-400">
+                  주문자
+                </div>
+                <div class="font-medium">
+                  {{ order.customerName }}
+                </div>
               </div>
               <div class="flex items-center justify-between gap-3">
-                <div class="text-zinc-500 dark:text-zinc-400">연락처</div>
-                <div class="font-medium">{{ order.customerPhone }}</div>
+                <div class="text-zinc-500 dark:text-zinc-400">
+                  연락처
+                </div>
+                <div class="font-medium">
+                  {{ order.customerPhone }}
+                </div>
               </div>
             </div>
           </div>
 
           <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-            <div class="text-sm font-semibold">배송 정보</div>
+            <div class="text-sm font-semibold">
+              배송 정보
+            </div>
             <div class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-200">
               <div class="flex items-center justify-between gap-3">
-                <div class="text-zinc-500 dark:text-zinc-400">수령자</div>
-                <div class="font-medium">{{ order.recipientName }}</div>
+                <div class="text-zinc-500 dark:text-zinc-400">
+                  수령자
+                </div>
+                <div class="font-medium">
+                  {{ order.recipientName }}
+                </div>
               </div>
               <div class="flex items-center justify-between gap-3">
-                <div class="text-zinc-500 dark:text-zinc-400">연락처</div>
-                <div class="font-medium">{{ order.recipientPhone }}</div>
+                <div class="text-zinc-500 dark:text-zinc-400">
+                  연락처
+                </div>
+                <div class="font-medium">
+                  {{ order.recipientPhone }}
+                </div>
               </div>
-              <div class="pt-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400">주소</div>
-              <div class="whitespace-pre-wrap text-sm">{{ order.shippingAddress1 }}</div>
-              <div v-if="order.shippingAddress2" class="whitespace-pre-wrap text-sm">{{ order.shippingAddress2 }}</div>
-              <div v-if="order.shippingMemo" class="pt-2">
-                <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">메모</div>
-                <div class="whitespace-pre-wrap text-sm">{{ order.shippingMemo }}</div>
+              <div class="pt-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                주소
+              </div>
+              <div class="whitespace-pre-wrap text-sm">
+                {{ order.shippingAddress1 }}
+              </div>
+              <div
+                v-if="order.shippingAddress2"
+                class="whitespace-pre-wrap text-sm"
+              >
+                {{ order.shippingAddress2 }}
+              </div>
+              <div
+                v-if="order.shippingMemo"
+                class="pt-2"
+              >
+                <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                  메모
+                </div>
+                <div class="whitespace-pre-wrap text-sm">
+                  {{ order.shippingMemo }}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-          <div class="border-b border-zinc-200 p-5 text-sm font-semibold dark:border-zinc-800">상품</div>
+          <div class="border-b border-zinc-200 p-5 text-sm font-semibold dark:border-zinc-800">
+            상품
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full min-w-[680px] text-sm">
               <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
                 <tr>
-                  <th class="px-4 py-3 text-left font-semibold">상품명</th>
-                  <th class="px-4 py-3 text-right font-semibold">단가</th>
-                  <th class="px-4 py-3 text-right font-semibold">수량</th>
-                  <th class="px-4 py-3 text-right font-semibold">소계</th>
+                  <th class="px-4 py-3 text-left font-semibold">
+                    상품명
+                  </th>
+                  <th class="px-4 py-3 text-right font-semibold">
+                    단가
+                  </th>
+                  <th class="px-4 py-3 text-right font-semibold">
+                    수량
+                  </th>
+                  <th class="px-4 py-3 text-right font-semibold">
+                    소계
+                  </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
-                <tr v-for="it in order.items" :key="it.id">
-                  <td class="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{{ it.productName }}</td>
+                <tr
+                  v-for="it in order.items"
+                  :key="it.id"
+                >
+                  <td class="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                    {{ it.productName }}
+                  </td>
                   <td class="px-4 py-3 text-right">
                     {{ money(it.unitPriceJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
                   </td>
-                  <td class="px-4 py-3 text-right">{{ it.qty }}</td>
+                  <td class="px-4 py-3 text-right">
+                    {{ it.qty }}
+                  </td>
                   <td class="px-4 py-3 text-right font-semibold">
                     {{ money(it.lineTotalJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
                   </td>
@@ -281,7 +367,9 @@ onMounted(() => {
 
       <aside class="space-y-4">
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <div class="text-sm font-semibold">상태 변경</div>
+          <div class="text-sm font-semibold">
+            상태 변경
+          </div>
           <div class="mt-3 space-y-3">
             <label class="space-y-1">
               <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">다음 상태</div>
@@ -290,7 +378,11 @@ onMounted(() => {
                 class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
               >
                 <option value="">선택</option>
-                <option v-for="s in allowedNext(order.orderStatus)" :key="s" :value="s">{{ label(s) }}</option>
+                <option
+                  v-for="s in allowedNext(order.orderStatus)"
+                  :key="s"
+                  :value="s"
+                >{{ label(s) }}</option>
               </select>
             </label>
 
@@ -301,7 +393,7 @@ onMounted(() => {
                 type="text"
                 class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
                 placeholder="예) 고객 요청"
-              />
+              >
             </label>
 
             <button
@@ -323,22 +415,45 @@ onMounted(() => {
         </div>
 
         <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-          <div class="border-b border-zinc-200 p-5 text-sm font-semibold dark:border-zinc-800">변경 이력</div>
-          <div v-if="order.history.length === 0" class="p-5 text-sm text-zinc-600 dark:text-zinc-300">이력이 없어요.</div>
-          <div v-else class="max-h-[420px] overflow-auto">
+          <div class="border-b border-zinc-200 p-5 text-sm font-semibold dark:border-zinc-800">
+            변경 이력
+          </div>
+          <div
+            v-if="order.history.length === 0"
+            class="p-5 text-sm text-zinc-600 dark:text-zinc-300"
+          >
+            이력이 없어요.
+          </div>
+          <div
+            v-else
+            class="max-h-[420px] overflow-auto"
+          >
             <table class="w-full text-sm">
               <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
                 <tr>
-                  <th class="px-4 py-3 text-left font-semibold">일시</th>
-                  <th class="px-4 py-3 text-left font-semibold">변경</th>
+                  <th class="px-4 py-3 text-left font-semibold">
+                    일시
+                  </th>
+                  <th class="px-4 py-3 text-left font-semibold">
+                    변경
+                  </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
-                <tr v-for="h in order.history" :key="h.id">
-                  <td class="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-300">{{ formatDate(h.changedAt) }}</td>
+                <tr
+                  v-for="h in order.history"
+                  :key="h.id"
+                >
+                  <td class="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-300">
+                    {{ formatDate(h.changedAt) }}
+                  </td>
                   <td class="px-4 py-3">
-                    <div class="text-sm font-semibold">{{ label(h.prevStatus) }} → {{ label(h.nextStatus) }}</div>
-                    <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{{ h.changedBy }} · {{ h.reason || '사유 없음' }}</div>
+                    <div class="text-sm font-semibold">
+                      {{ label(h.prevStatus) }} → {{ label(h.nextStatus) }}
+                    </div>
+                    <div class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      {{ h.changedBy }} · {{ h.reason || '사유 없음' }}
+                    </div>
                   </td>
                 </tr>
               </tbody>

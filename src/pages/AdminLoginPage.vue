@@ -43,11 +43,14 @@ async function submit() {
     status.value = 'error'
     // APIError인 경우 응답 본문/상태에 따라 친화적인 메시지 선택
     if (e instanceof ApiError) {
-      const b = e.body as any
-      // 서버가 { detail: string } 형태로 설명을 제공하면 이를 사용
+      const body = e.body
+      const detail =
+        body && typeof body === 'object' && 'detail' in body
+          ? (body as { detail?: unknown }).detail
+          : undefined
       const msg =
-        b && typeof b === 'object' && typeof b.detail === 'string'
-          ? b.detail
+        typeof detail === 'string'
+          ? detail
           // 401은 인증 실패로 간주하여 비밀번호 오류 메시지 노출
           : e.status === 401
             ? '비밀번호가 올바르지 않아요.'
@@ -69,19 +72,29 @@ async function submit() {
     <!-- 헤더 블록: 제목과 안내 텍스트 -->
     <div>
       <!-- 페이지 제목 -->
-      <h1 class="text-lg font-semibold">관리자 로그인</h1>
+      <h1 class="text-lg font-semibold">
+        관리자 로그인
+      </h1>
       <!-- 안내 문구: 관리자 기능 범위 설명 -->
-      <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">관리자만 상품 등록/수정/주문관리를 사용할 수 있어요.</p>
+      <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        관리자만 상품 등록/수정/주문관리를 사용할 수 있어요.
+      </p>
     </div>
 
     <!-- 오류 메시지 박스: 오류 상태일 때만 표시 -->
-    <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="status === 'error'"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       <!-- 계산된 오류 메시지 출력 -->
       {{ error }}
     </div>
 
     <!-- 로그인 폼: submit 이벤트를 가로채고 JS 핸들러로 처리 -->
-    <form class="space-y-4" @submit.prevent="submit">
+    <form
+      class="space-y-4"
+      @submit.prevent="submit"
+    >
       <!-- 비밀번호 입력 레이블과 필드 그룹 -->
       <label class="space-y-1">
         <!-- 입력 필드 레이블 텍스트 -->
@@ -93,7 +106,7 @@ async function submit() {
           type="password"
           class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
           placeholder="비밀번호를 입력해 주세요"
-        />
+        >
       </label>
       <!-- 제출 버튼 래퍼: 상단 패딩으로 간격 확보 -->
       <div class="pt-2">

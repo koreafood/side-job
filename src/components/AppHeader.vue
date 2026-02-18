@@ -82,7 +82,7 @@ onMounted(() => {
             class="w-full rounded-xl border border-zinc-200 bg-white px-9 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
             :placeholder="isHome ? '상품을 검색해 보세요' : '검색은 홈에서 할 수 있어요'"
             @keydown.enter.prevent="submitSearch"
-          />
+          >
         </div>
       </div>
 
@@ -115,10 +115,10 @@ onMounted(() => {
 
       <!-- 관리자용: 상품목록 버튼 (로그인 시만 노출) -->
       <button
+        v-if="admin.isAdmin.value"
         type="button"
         class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
         @click="$router.push({ name: 'admin-products' })"
-        v-if="admin.isAdmin.value"
       >
         <Plus class="h-4 w-4" />
         <span class="hidden sm:inline">작품목록</span>
@@ -126,10 +126,10 @@ onMounted(() => {
 
       <!-- 관리자용: 주문 관리 버튼 (로그인 시만 노출) -->
       <button
+        v-if="admin.isAdmin.value"
         type="button"
         class="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
         @click="$router.push({ name: 'admin-orders' })"
-        v-if="admin.isAdmin.value"
       >
         <ClipboardList class="h-4 w-4" />
         <span class="hidden sm:inline">주문 관리</span>

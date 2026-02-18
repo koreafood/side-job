@@ -41,39 +41,65 @@ onMounted(async () => {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-lg font-semibold">판매자 프로필</h1>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">스크린샷 스타일의 프로필 화면</p>
+        <h1 class="text-lg font-semibold">
+          판매자 프로필
+        </h1>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          스크린샷 스타일의 프로필 화면
+        </p>
       </div>
     </div>
 
-    <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="status === 'error'"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       {{ error }}
     </div>
 
-    <div v-else-if="status === 'loading'" class="grid gap-4 lg:grid-cols-[320px_1fr_320px]">
+    <div
+      v-else-if="status === 'loading'"
+      class="grid gap-4 lg:grid-cols-[320px_1fr_320px]"
+    >
       <div class="h-[220px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
       <div class="h-[220px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
       <div class="h-[220px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
     </div>
 
-    <div v-else class="grid gap-4 lg:grid-cols-[320px_1fr_320px]">
+    <div
+      v-else
+      class="grid gap-4 lg:grid-cols-[320px_1fr_320px]"
+    >
       <div>
-        <SellerCard v-if="seller" :seller="seller" />
+        <SellerCard
+          v-if="seller"
+          :seller="seller"
+        />
       </div>
 
       <section
         class="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950"
       >
-        <h2 class="text-sm font-semibold">{{ seller?.name }}의 프로필</h2>
+        <h2 class="text-sm font-semibold">
+          {{ seller?.name }}의 프로필
+        </h2>
         <p class="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-200">
           {{ seller?.bio }}
         </p>
       </section>
 
       <aside class="space-y-3">
-        <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">최신 상품 페이지</div>
-        <ProductCard v-if="latest[0]" :product="latest[0]" />
-        <div v-else class="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+        <div class="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+          최신 상품 페이지
+        </div>
+        <ProductCard
+          v-if="latest[0]"
+          :product="latest[0]"
+        />
+        <div
+          v-else
+          class="rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+        >
           아직 등록된 상품이 없어요.
         </div>
       </aside>

@@ -119,20 +119,27 @@ async function submit() {
 </script>
 
 <template>
-  <form class="space-y-3" @submit.prevent="submit">
+  <form
+    class="space-y-3"
+    @submit.prevent="submit"
+  >
     <div class="grid gap-3 sm:grid-cols-2">
       <div class="space-y-1">
-        <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">주문자명</div>
+        <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+          주문자명
+        </div>
         <input
           v-model="authorName"
           class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
           :placeholder="props.maskedName ? `${props.maskedName} (전체 이름 입력)` : '예) 민지'"
-        />
+        >
       </div>
     </div>
     <!-- 리뷰 내용 입력 -->
     <div class="space-y-1">
-      <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">리뷰</div>
+      <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        리뷰
+      </div>
       <textarea
         v-model="body"
         rows="4"
@@ -141,16 +148,20 @@ async function submit() {
       />
     </div>
     <div class="space-y-1">
-      <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">전화번호 인증</div>
+      <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        전화번호 인증
+      </div>
       <input
         v-model="phoneLast4"
         maxlength="4"
         class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
         placeholder="전화번호 마지막 4자리"
-      />
+      >
     </div>
     <div class="space-y-2">
-      <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">사진 첨부</div>
+      <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+        사진 첨부
+      </div>
       <div class="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -159,16 +170,32 @@ async function submit() {
         >
           사진 추가
         </button>
-        <input ref="photoInput" type="file" accept="image/*" multiple class="sr-only" @change="onPickPhotos" />
-        <div class="text-xs text-zinc-500 dark:text-zinc-400">최대 6장</div>
+        <input
+          ref="photoInput"
+          type="file"
+          accept="image/*"
+          multiple
+          class="sr-only"
+          @change="onPickPhotos"
+        >
+        <div class="text-xs text-zinc-500 dark:text-zinc-400">
+          최대 6장
+        </div>
       </div>
-      <div v-if="localImages.length" class="grid grid-cols-3 gap-2">
+      <div
+        v-if="localImages.length"
+        class="grid grid-cols-3 gap-2"
+      >
         <div
           v-for="(img, idx) in localImages"
           :key="img.previewUrl"
           class="relative aspect-square overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
         >
-          <img :src="img.previewUrl" alt="" class="h-full w-full object-cover" />
+          <img
+            :src="img.previewUrl"
+            alt=""
+            class="h-full w-full object-cover"
+          >
           <button
             type="button"
             class="absolute right-1 top-1 rounded-md bg-black/60 px-2 py-1 text-[10px] font-semibold text-white"
@@ -182,7 +209,12 @@ async function submit() {
     
     <!-- 제출 버튼 및 에러 메시지 -->
     <div class="flex items-center justify-between gap-3">
-      <div v-if="error" class="text-xs font-semibold text-rose-600">{{ error }}</div>
+      <div
+        v-if="error"
+        class="text-xs font-semibold text-rose-600"
+      >
+        {{ error }}
+      </div>
       <button
         type="submit"
         class="ml-auto inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"

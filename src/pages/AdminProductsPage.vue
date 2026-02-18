@@ -51,8 +51,12 @@ onMounted(() => {
     <!-- 페이지 헤더 및 액션 -->
     <div class="flex items-end justify-between gap-4">
       <div>
-        <h1 class="text-lg font-semibold">작품 목록</h1>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">전시여부 필터로 목록을 확인하세요.</p>
+        <h1 class="text-lg font-semibold">
+          작품 목록
+        </h1>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          전시여부 필터로 목록을 확인하세요.
+        </p>
       </div>
       <div class="flex items-center gap-2">
         <!-- 전시여부 필터 -->
@@ -61,9 +65,15 @@ onMounted(() => {
           class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
           @change="load"
         >
-          <option value="all">전체</option>
-          <option value="true">전시중</option>
-          <option value="false">전시중지</option>
+          <option value="all">
+            전체
+          </option>
+          <option value="true">
+            전시중
+          </option>
+          <option value="false">
+            전시중지
+          </option>
         </select>
         <!-- 새로고침 -->
         <button
@@ -84,32 +94,52 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="status === 'error'"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       {{ error }}
     </div>
 
     <!-- 목록 테이블 -->
-    <div v-else class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+    <div
+      v-else
+      class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+    >
       <table class="w-full text-sm">
         <thead>
           <tr class="text-left text-zinc-600 dark:text-zinc-300">
-            <th class="p-2">사진</th>
-            <th class="p-2">상품코드</th>
-            <th class="p-2">상품명</th>
-            <th class="p-2">가격</th>
-            <th class="p-2">전시여부</th>
+            <th class="p-2">
+              사진
+            </th>
+            <th class="p-2">
+              상품코드
+            </th>
+            <th class="p-2">
+              상품명
+            </th>
+            <th class="p-2">
+              가격
+            </th>
+            <th class="p-2">
+              전시여부
+            </th>
           </tr>
         </thead>
         <tbody>
           <!-- 상품 행 -->
-          <tr v-for="p in items" :key="p.id" class="border-t border-zinc-100 dark:border-zinc-800">
+          <tr
+            v-for="p in items"
+            :key="p.id"
+            class="border-t border-zinc-100 dark:border-zinc-800"
+          >
             <td class="p-2">
               <img
                 :src="(p.images?.[0]?.url) || fallback"
                 alt=""
                 class="h-[50px] w-[50px] object-cover rounded-md border border-zinc-200 dark:border-zinc-800"
                 @error="onImgError"
-              />
+              >
             </td>
             <td class="p-2">
               <a
@@ -120,8 +150,12 @@ onMounted(() => {
                 {{ p.id }}
               </a>
             </td>
-            <td class="p-2">{{ p.name }}</td>
-            <td class="p-2">{{ nf.format(p.basePrice) }}</td>
+            <td class="p-2">
+              {{ p.name }}
+            </td>
+            <td class="p-2">
+              {{ nf.format(p.basePrice) }}
+            </td>
             <td class="p-2">
               <span v-if="p.published">전시중</span>
               <span v-else>전시중지</span>
@@ -129,10 +163,15 @@ onMounted(() => {
           </tr>
           <!-- 빈 상태 -->
           <tr v-if="items.length === 0">
-            <td colspan="5" class="p-4 text-center text-zinc-500 dark:text-zinc-400">표시할 상품이 없어요.</td>
+            <td
+              colspan="5"
+              class="p-4 text-center text-zinc-500 dark:text-zinc-400"
+            >
+              표시할 상품이 없어요.
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
-  </template>
+</template>

@@ -28,10 +28,6 @@ const reviews = ref<Review[]>([])
 const reviewStatus = ref<'idle' | 'loading' | 'error'>('idle')
 const reviewError = ref<string | null>(null)
 
-function money(v: number) {
-  return v.toLocaleString()
-}
-
 function formatDate(s: string) {
   const d = new Date(s)
   if (Number.isNaN(d.getTime())) return s
@@ -119,8 +115,12 @@ watch(
   <div class="space-y-6">
     <div class="flex items-end justify-between gap-4">
       <div>
-        <h1 class="text-lg font-semibold">주문 상세</h1>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">제작 단계를 확인할 수 있어요.</p>
+        <h1 class="text-lg font-semibold">
+          주문 상세
+        </h1>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          제작 단계를 확인할 수 있어요.
+        </p>
       </div>
 
       <button
@@ -132,30 +132,53 @@ watch(
       </button>
     </div>
 
-    <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="status === 'error'"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       {{ error }}
     </div>
 
-    <div v-else-if="status === 'loading'" class="h-[360px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
+    <div
+      v-else-if="status === 'loading'"
+      class="h-[360px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+    />
 
-    <div v-else-if="order" class="space-y-4">
+    <div
+      v-else-if="order"
+      class="space-y-4"
+    >
       <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
         <div class="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">주문상세 번호</div>
-            <div class="mt-1 text-lg font-semibold tracking-tight">{{ order.orderNo }}</div>
-            <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{{ formatDate(order.orderedAt) }}</div>
-            <div class="mt-1 text-sm text-zinc-700 dark:text-zinc-200">주문자: {{ order.customerMaskedName }}</div>
+            <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              주문상세 번호
+            </div>
+            <div class="mt-1 text-lg font-semibold tracking-tight">
+              {{ order.orderNo }}
+            </div>
+            <div class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+              {{ formatDate(order.orderedAt) }}
+            </div>
+            <div class="mt-1 text-sm text-zinc-700 dark:text-zinc-200">
+              주문자: {{ order.customerMaskedName }}
+            </div>
           </div>
           <div class="text-right">
-            <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">상태</div>
-            <div class="mt-1 text-sm font-semibold">{{ label(order.orderStatus) }}</div>
+            <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              상태
+            </div>
+            <div class="mt-1 text-sm font-semibold">
+              {{ label(order.orderStatus) }}
+            </div>
           </div>
         </div>
       </div>
 
       <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-        <div class="text-sm font-semibold">주문 상품</div>
+        <div class="text-sm font-semibold">
+          주문 상품
+        </div>
         <div class="mt-4 space-y-3">
           <div
             v-for="it in order.items"
@@ -167,11 +190,17 @@ watch(
               alt=""
               class="h-14 w-14 rounded-md border border-zinc-200 object-cover dark:border-zinc-800"
               @error="(e: Event) => ((e.target as HTMLImageElement).src = 'https://placehold.co/60x60?text=IMG')"
-            />
+            >
             <div class="min-w-0 flex-1">
-              <div class="text-xs text-zinc-500 dark:text-zinc-400">상품코드</div>
-              <div class="font-semibold">{{ it.productId }}</div>
-              <div class="mt-1 text-sm">{{ it.productName }} (수량 {{ it.qty }})</div>
+              <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                상품코드
+              </div>
+              <div class="font-semibold">
+                {{ it.productId }}
+              </div>
+              <div class="mt-1 text-sm">
+                {{ it.productName }} (수량 {{ it.qty }})
+              </div>
             </div>
           </div>
         </div>
@@ -183,18 +212,37 @@ watch(
         v-if="selectedProductId"
         class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
       >
-        <div class="text-sm font-semibold">구매자 리뷰</div>
-        <div v-if="reviewStatus === 'loading'" class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+        <div class="text-sm font-semibold">
+          구매자 리뷰
+        </div>
+        <div
+          v-if="reviewStatus === 'loading'"
+          class="mt-3 text-sm text-zinc-500 dark:text-zinc-400"
+        >
           리뷰를 불러오는 중이에요.
         </div>
-        <div v-else-if="reviewStatus === 'error'" class="mt-3 text-sm text-rose-600">
+        <div
+          v-else-if="reviewStatus === 'error'"
+          class="mt-3 text-sm text-rose-600"
+        >
           {{ reviewError }}
         </div>
-        <div v-else-if="reviews.length === 0" class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+        <div
+          v-else-if="reviews.length === 0"
+          class="mt-3 text-sm text-zinc-500 dark:text-zinc-400"
+        >
           등록된 리뷰가 없어요.
         </div>
-        <div v-else class="mt-4">
-          <ReviewList :reviews="reviews" :order-id="order.id" allow-delete @deleted="onReviewDeleted" />
+        <div
+          v-else
+          class="mt-4"
+        >
+          <ReviewList
+            :reviews="reviews"
+            :order-id="order.id"
+            allow-delete
+            @deleted="onReviewDeleted"
+          />
         </div>
       </div>
 
@@ -202,18 +250,27 @@ watch(
         v-if="order.orderStatus === 'delivered' && (order.items?.length ?? 0) > 0"
         class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
       >
-        <div class="text-sm font-semibold">구매자 리뷰 작성</div>
+        <div class="text-sm font-semibold">
+          구매자 리뷰 작성
+        </div>
         <div class="mt-3 flex items-center gap-2">
           <select
             v-model="selectedProductId"
             class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
           >
-            <option v-for="it in order.items" :key="it.productId" :value="it.productId">
+            <option
+              v-for="it in order.items"
+              :key="it.productId"
+              :value="it.productId"
+            >
               {{ it.productName }}
             </option>
           </select>
         </div>
-        <div class="mt-4" v-if="selectedProductId">
+        <div
+          v-if="selectedProductId"
+          class="mt-4"
+        >
           <ReviewForm
             :product-id="selectedProductId"
             :order-id="order.id"
@@ -224,7 +281,10 @@ watch(
       </div>
     </div>
 
-    <div v-else class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+    <div
+      v-else
+      class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+    >
       주문 정보가 없어요.
     </div>
   </div>

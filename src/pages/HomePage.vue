@@ -54,18 +54,26 @@ onMounted(() => {
   <div class="space-y-6">
     <div class="flex items-end justify-between gap-4">
       <div>
-        <h1 class="text-lg font-semibold">핸드메이드 상품</h1>
+        <h1 class="text-lg font-semibold">
+          핸드메이드 상품
+        </h1>
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {{ q ? `“${q}” 검색 결과` : '오늘의 추천 상품을 둘러보세요.' }}
         </p>
       </div>
     </div>
 
-    <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="status === 'error'"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       {{ error }}
     </div>
 
-    <div v-if="status === 'loading'" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      v-if="status === 'loading'"
+      class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+    >
       <div
         v-for="i in 6"
         :key="i"
@@ -73,8 +81,15 @@ onMounted(() => {
       />
     </div>
 
-    <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <ProductCard v-for="p in products" :key="p.id" :product="p" />
+    <div
+      v-else
+      class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+    >
+      <ProductCard
+        v-for="p in products"
+        :key="p.id"
+        :product="p"
+      />
     </div>
   </div>
 </template>

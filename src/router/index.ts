@@ -115,7 +115,9 @@ const router = createRouter({
  *   3. 권한이 필요한데 관리자가 아니면 로그인 페이지로 리다이렉트
  */
 router.beforeEach((to, _from, next) => {
-  const needAdmin = to.matched.some((r) => (r.meta as any)?.requiresAdmin)
+  const needAdmin = to.matched.some(
+    (r) => (r.meta as { requiresAdmin?: boolean }).requiresAdmin === true,
+  )
   const isAdmin = localStorage.getItem('isAdmin') === '1'
   if (needAdmin && !isAdmin) {
     next({ name: 'admin-login' })

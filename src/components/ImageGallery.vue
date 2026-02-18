@@ -46,7 +46,7 @@ const selected = computed(() => sorted.value.find((it) => it.id === selectedId.v
         :src="selected.url"
         :alt="alt"
         class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-      />
+      >
     </div>
 
     <!-- 썸네일 목록 영역 -->
@@ -63,7 +63,12 @@ const selected = computed(() => sorted.value.find((it) => it.id === selectedId.v
         "
         @click="selectedId = img.id"
       >
-        <img :src="img.url" :alt="alt" class="h-20 w-20 object-cover md:h-24 md:w-24" loading="lazy" />
+        <img
+          :src="img.url"
+          :alt="alt"
+          class="h-20 w-20 object-cover md:h-24 md:w-24"
+          loading="lazy"
+        >
       </button>
     </div>
   </div>

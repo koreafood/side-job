@@ -7,7 +7,6 @@ import type { Product, ProductOrderSummary, Review, Seller } from '@/lib/types'
 import ImageGallery from '@/components/ImageGallery.vue'
 import SellerCard from '@/components/SellerCard.vue'
 import ReviewList from '@/components/ReviewList.vue'
-import ReviewForm from '@/components/ReviewForm.vue'
 import { useCartStore } from '@/composables/useCartStore'
 import { ShoppingCart } from 'lucide-vue-next'
 import { useAdminStore } from '@/composables/useAdminStore'
@@ -105,10 +104,6 @@ async function confirmDelete() {
   }
 }
 
-function onReviewCreated(r: Review) {
-  reviews.value = [r, ...reviews.value]
-}
-
 onMounted(() => {
   void load()
 })
@@ -116,45 +111,75 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <div v-if="status === 'error'" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+    <div
+      v-if="status === 'error'"
+      class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
       {{ error }}
     </div>
 
-    <div v-else-if="status === 'loading'" class="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <div
+      v-else-if="status === 'loading'"
+      class="grid gap-6 lg:grid-cols-[1fr_360px]"
+    >
       <div class="h-[520px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
       <div class="h-[520px] animate-pulse rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
     </div>
 
-    <div v-else-if="product" class="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <div
+      v-else-if="product"
+      class="grid gap-6 lg:grid-cols-[1fr_360px]"
+    >
       <section class="space-y-4">
-        <div class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">작품 페이지</div>
-        <h1 class="text-xl font-semibold tracking-tight">{{ product.name }}</h1>
-        <ImageGallery :images="product.images" :alt="product.name" />
+        <div class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">
+          작품 페이지
+        </div>
+        <h1 class="text-xl font-semibold tracking-tight">
+          {{ product.name }}
+        </h1>
+        <ImageGallery
+          :images="product.images"
+          :alt="product.name"
+        />
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <div class="text-sm font-semibold">상세정보</div>
+          <div class="text-sm font-semibold">
+            상세정보
+          </div>
           <div
             v-if="product.detailsHtml && product.detailsHtml.trim()"
             class="mt-4 text-sm leading-6 prose prose-sm max-w-none"
             v-html="product.detailsHtml"
           />
-          <div v-else class="mt-4 text-sm text-zinc-600 dark:text-zinc-300">상세정보가 없어요.</div>
+          <div
+            v-else
+            class="mt-4 text-sm text-zinc-600 dark:text-zinc-300"
+          >
+            상세정보가 없어요.
+          </div>
         </div>
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <div class="text-sm font-semibold">구매자 리뷰</div>
+          <div class="text-sm font-semibold">
+            구매자 리뷰
+          </div>
           <div class="mt-4">
             <ReviewList :reviews="reviews" />
           </div>
         </div>
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <div class="text-sm font-semibold">이 상품과 연결된 주문</div>
+          <div class="text-sm font-semibold">
+            이 상품과 연결된 주문
+          </div>
           <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             주문상세 번호를 클릭하면 제작 단계를 볼 수 있어요.
           </p>
 
-          <div v-if="productOrders.length === 0" class="mt-4 text-sm text-zinc-600 dark:text-zinc-300">
+          <div
+            v-if="productOrders.length === 0"
+            class="mt-4 text-sm text-zinc-600 dark:text-zinc-300"
+          >
             연결된 주문이 없어요.
           </div>
 
@@ -166,9 +191,15 @@ onMounted(() => {
               <table class="w-full text-sm">
                 <thead class="border-b border-zinc-200 bg-zinc-50 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300">
                   <tr>
-                    <th class="px-4 py-3 text-left font-semibold">주문상세 번호</th>
-                    <th class="px-4 py-3 text-left font-semibold">주문일시</th>
-                    <th class="px-4 py-3 text-left font-semibold">상태</th>
+                    <th class="px-4 py-3 text-left font-semibold">
+                      주문상세 번호
+                    </th>
+                    <th class="px-4 py-3 text-left font-semibold">
+                      주문일시
+                    </th>
+                    <th class="px-4 py-3 text-left font-semibold">
+                      상태
+                    </th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -205,22 +236,24 @@ onMounted(() => {
           <div class="text-2xl font-semibold">
             {{ product.basePrice.toLocaleString() }}<span class="ml-0.5 text-[0.75em]">원</span>
           </div>
-          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">데모: 배송/결제는 생략돼요.</p>
+          <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            데모: 배송/결제는 생략돼요.
+          </p>
 
           <div class="mt-4 grid grid-cols-2 gap-2">
             <button
+              v-if="admin.isAdmin.value"
               type="button"
               class="inline-flex w-full items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
               @click="goEdit"
-              v-if="admin.isAdmin.value"
             >
               수정
             </button>
             <button
+              v-if="admin.isAdmin.value"
               type="button"
               class="inline-flex w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200 dark:hover:bg-rose-950/60"
               @click="openDeleteConfirm"
-              v-if="admin.isAdmin.value"
             >
               삭제
             </button>
@@ -234,7 +267,10 @@ onMounted(() => {
             <ShoppingCart class="h-4 w-4" />
             주문하기
           </button>
-          <div v-if="cart.state.error" class="mt-3 text-xs font-semibold text-rose-600">
+          <div
+            v-if="cart.state.error"
+            class="mt-3 text-xs font-semibold text-rose-600"
+          >
             {{ cart.state.error }}
           </div>
         </div>
@@ -245,19 +281,28 @@ onMounted(() => {
           class="w-full text-left"
           @click="$router.push({ name: 'seller', params: { sellerId: seller.id } })"
         >
-          <SellerCard :seller="seller" compact />
+          <SellerCard
+            :seller="seller"
+            compact
+          />
         </button>
 
         <div class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
-          <div class="text-sm font-semibold">설명</div>
-          <p class="mt-2 whitespace-pre-wrap leading-6">{{ product.description }}</p>
+          <div class="text-sm font-semibold">
+            설명
+          </div>
+          <p class="mt-2 whitespace-pre-wrap leading-6">
+            {{ product.description }}
+          </p>
         </div>
 
         <div
           v-if="confirmDeleteOpen"
           class="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200"
         >
-          <div class="font-semibold">정말로 이 상품을 삭제할까요?</div>
+          <div class="font-semibold">
+            정말로 이 상품을 삭제할까요?
+          </div>
           <div class="mt-4 flex gap-2">
             <button
               type="button"
