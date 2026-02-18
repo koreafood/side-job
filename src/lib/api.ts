@@ -369,6 +369,20 @@ export const api = {
   },
 
   /** 
+   * 이미지 업로드 
+   * - 입력: File 객체
+   * - 반환: 업로드된 이미지 정보
+   */
+  uploadImage: (file: File) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return apiFetch<{ url: string; filename: string; contentType: string }>('/api/uploads', {
+      method: 'POST',
+      body: fd,
+    })
+  },
+
+  /** 
    * 리뷰 목록 조회 
    * - 입력: productId
    * - 반환: Review[]
@@ -383,7 +397,14 @@ export const api = {
    */
   createReview: (
     productId: string,
-    input: { authorName: string; rating: number; body: string; orderId: string; phoneLast4: string },
+    input: {
+      authorName: string
+      rating: number
+      body: string
+      orderId: string
+      phoneLast4: string
+      photoUrls: string[]
+    },
   ) =>
     apiFetch<Review>(`/api/products/${encodeURIComponent(productId)}/reviews`, {
       method: 'POST',

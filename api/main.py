@@ -44,6 +44,7 @@ from api.models import (
     ProductionStep,
     ProductionStepPhoto,
     Review,
+    ReviewPhoto,
     Seller,
 )
 from api.schemas import (
@@ -71,6 +72,7 @@ from api.schemas import (
     ProductOut,
     ReviewCreateIn,
     ReviewOut,
+    ReviewPhotoOut,
     SellerOut,
     UploadOut,
     AdminSessionOut,
@@ -508,6 +510,19 @@ def _production_step_photos(session: Session, step_id: str) -> list[ProductionSt
     return out
 
 
+def _review_photos(session: Session, review_id: str) -> list[ReviewPhotoOut]:
+    rows = session.exec(
+        select(ReviewPhoto).where(ReviewPhoto.review_id == review_id).order_by(ReviewPhoto.sort.asc())
+    ).all()
+    out: list[ReviewPhotoOut] = []
+    for r in rows:
+        url = r.url
+        if isinstance(url, str) and url.startswith("/uploads/"):
+            url = _abs_url(url)
+        out.append(ReviewPhotoOut(id=r.id, url=url, sort=r.sort))
+    return out
+
+
 def _production_steps(session: Session, order_id: str) -> list[ProductionStepOut]:
     rows = session.exec(
         select(ProductionStep)
@@ -527,8 +542,8 @@ def _production_steps(session: Session, order_id: str) -> list[ProductionStepOut
     ]
 
 
-@app.post("/api/admin/uploads", response_model=UploadOut)
-def upload_admin_image(file: UploadFile = File(...)) -> UploadOut:
+@app.post("/api/uploads", response_model=UploadOut)
+def upload_image(file: UploadFile = File(...)) -> UploadOut:
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="이미지 파일만 업로드할 수 있어요.")
 
@@ -549,6 +564,11 @@ def upload_admin_image(file: UploadFile = File(...)) -> UploadOut:
 
     dst.write_bytes(data)
     return UploadOut(url=_abs_url(f"/uploads/{safe_name}"), filename=safe_name, contentType=file.content_type)
+
+
+@app.post("/api/admin/uploads", response_model=UploadOut)
+def upload_admin_image(file: UploadFile = File(...)) -> UploadOut:
+    return upload_image(file)
 
 
 @app.get("/api/sellers/{seller_id}", response_model=SellerOut)
@@ -733,6 +753,11 @@ def delete_admin_product(product_id: str, session: Session = Depends(get_session
         session.delete(img)
 
     reviews = session.exec(select(Review).where(Review.product_id == product_id)).all()
+    review_ids = [r.id for r in reviews]
+    if review_ids:
+        photos = session.exec(select(ReviewPhoto).where(ReviewPhoto.review_id.in_(review_ids))).all()
+        for p in photos:
+            session.delete(p)
     for r in reviews:
         session.delete(r)
 
@@ -758,6 +783,7 @@ def list_reviews(product_id: str, session: Session = Depends(get_session_dep)) -
             rating=r.rating,
             body=r.body,
             createdAt=r.created_at,
+            photos=_review_photos(session, r.id),
         )
         for r in rows
     ]
@@ -781,6 +807,13 @@ def create_review(
     ).first()
     if item is None:
         raise HTTPException(status_code=400, detail="해당 주문에 이 상품이 없어요.")
+    def norm_name(v: str) -> str:
+        return "".join((v or "").split())
+    name = norm_name(body.authorName)
+    if not name:
+        raise HTTPException(status_code=400, detail="주문자명을 입력해 주세요.")
+    if name != norm_name(o.customer_name):
+        raise HTTPException(status_code=401, detail="주문자명 인증에 실패했어요.")
     def last4(v: str) -> str:
         d = "".join(ch for ch in v if ch.isdigit())
         return d[-4:] if len(d) >= 4 else d
@@ -791,11 +824,26 @@ def create_review(
     r = Review(
         id=f"rev_{uuid4().hex}",
         product_id=product_id,
-        author_name=body.authorName,
+        author_name=_mask_korean_name(o.customer_name),
         rating=body.rating,
         body=body.body,
     )
     session.add(r)
+    photo_urls = [u for u in body.photoUrls if isinstance(u, str)]
+    photos = []
+    if photo_urls:
+        for i, url in enumerate(photo_urls, start=1):
+            final_url = _move_image_to_order(url, o.order_no)
+            photos.append(
+                ReviewPhoto(
+                    id=f"rph_{uuid4().hex}",
+                    review_id=r.id,
+                    url=final_url,
+                    sort=i,
+                )
+            )
+    for p in photos:
+        session.add(p)
     session.commit()
     session.refresh(r)
     return ReviewOut(
@@ -805,6 +853,7 @@ def create_review(
         rating=r.rating,
         body=r.body,
         createdAt=r.created_at,
+        photos=_review_photos(session, r.id),
     )
 
 
@@ -1210,6 +1259,7 @@ def public_get_order(order_id: str, session: Session = Depends(get_session_dep))
             }
             for it in order_items
         ],
+        customerName=o.customer_name,
         customerMaskedName=_mask_korean_name(o.customer_name),
     )
 

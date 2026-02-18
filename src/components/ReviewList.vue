@@ -6,7 +6,6 @@
  * - 의존성: vue, @/lib/types.ts, RatingStars.vue
  */
 import type { Review } from '@/lib/types'
-import RatingStars from '@/components/RatingStars.vue'
 
 defineProps<{
   reviews: Review[]
@@ -36,12 +35,18 @@ function formatDate(iso: string) {
         <div class="text-sm font-semibold">{{ r.authorName }}</div>
         <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ formatDate(r.createdAt) }}</div>
       </div>
-      <div class="mt-1">
-        <RatingStars :value="r.rating" size="sm" />
-      </div>
       <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-200">
         {{ r.body }}
       </p>
+      <div v-if="r.photos?.length" class="mt-3 grid grid-cols-3 gap-2">
+        <div
+          v-for="p in r.photos"
+          :key="p.id"
+          class="aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+        >
+          <img :src="p.url" alt="" class="h-full w-full object-cover" />
+        </div>
+      </div>
     </div>
   </div>
 </template>

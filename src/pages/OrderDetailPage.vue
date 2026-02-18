@@ -114,10 +114,6 @@ onMounted(() => {
           <div class="text-right">
             <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">상태</div>
             <div class="mt-1 text-sm font-semibold">{{ label(order.orderStatus) }}</div>
-            <div class="mt-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400">총액</div>
-            <div class="mt-1 text-xl font-semibold">
-              {{ money(order.totalJpy) }}<span class="ml-0.5 text-[0.75em]">원</span>
-            </div>
           </div>
         </div>
       </div>
@@ -148,7 +144,7 @@ onMounted(() => {
       <ProductionStepsTimeline :steps="order.productionSteps" />
 
       <div
-        v-if="order.orderStatus === 'delivered' && (order.items?.length ?? 0) > 0"
+        v-if="(order.items?.length ?? 0) > 0"
         class="rounded-2xl border border-zinc-200 bg-white p-5 text-sm dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
       >
         <div class="text-sm font-semibold">구매자 리뷰 작성</div>
@@ -163,7 +159,11 @@ onMounted(() => {
           </select>
         </div>
         <div class="mt-4" v-if="selectedProductId">
-          <ReviewForm :product-id="selectedProductId" :order-id="order.id" />
+          <ReviewForm
+            :product-id="selectedProductId"
+            :order-id="order.id"
+            :masked-name="order.customerMaskedName"
+          />
         </div>
       </div>
     </div>

@@ -5,19 +5,51 @@
  * - 주요 기능: 입력 값 검증, 리뷰 생성 API 호출
  * - 의존성: vue, @/lib/api.ts, @/lib/types.ts
  */
-import { ref } from 'vue'
-import { api } from '@/lib/api'
+import { onUnmounted, ref } from 'vue'
+import { api, ApiError } from '@/lib/api'
 import type { Review } from '@/lib/types'
 
-const props = defineProps<{ productId: string; orderId: string }>()
+const props = defineProps<{ productId: string; orderId: string; maskedName?: string }>()
 const emit = defineEmits<{ created: [review: Review] }>()
 
 const authorName = ref('')
-const rating = ref(5)
 const body = ref('')
 const phoneLast4 = ref('')
 const status = ref<'idle' | 'saving' | 'error'>('idle')
 const error = ref<string | null>(null)
+
+type LocalImage = { file: File; previewUrl: string }
+const localImages = ref<LocalImage[]>([])
+const photoInput = ref<HTMLInputElement | null>(null)
+const maxPhotos = 6
+
+
+function triggerPhotos() {
+  photoInput.value?.click()
+}
+
+function onPickPhotos(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  for (const file of files) {
+    if (localImages.value.length >= maxPhotos) break
+    if (!file.type.startsWith('image/')) continue
+    const previewUrl = URL.createObjectURL(file)
+    localImages.value.push({ file, previewUrl })
+  }
+  input.value = ''
+}
+
+function removePhoto(index: number) {
+  const it = localImages.value[index]
+  if (!it) return
+  URL.revokeObjectURL(it.previewUrl)
+  localImages.value.splice(index, 1)
+}
+
+onUnmounted(() => {
+  for (const it of localImages.value) URL.revokeObjectURL(it.previewUrl)
+})
 
 /**
  * 리뷰 제출 함수
@@ -43,29 +75,45 @@ async function submit() {
   }
   if (!name || !text) {
     status.value = 'error'
-    error.value = '닉네임과 리뷰 내용을 입력해 주세요.'
+    error.value = '주문자명과 리뷰 내용을 입력해 주세요.'
     return
   }
   status.value = 'saving'
   error.value = null
   try {
+    const uploaded: string[] = []
+    for (const it of localImages.value) {
+      const res = await api.uploadImage(it.file)
+      uploaded.push(res.url)
+    }
     const created = await api.createReview(props.productId, {
       authorName: name,
-      rating: rating.value,
+      rating: 5,
       body: text,
       orderId: props.orderId,
       phoneLast4: digits,
+      photoUrls: uploaded,
     })
     emit('created', created)
     // 폼 초기화
     authorName.value = ''
-    rating.value = 5
     body.value = ''
     phoneLast4.value = ''
+    for (const it of localImages.value) URL.revokeObjectURL(it.previewUrl)
+    localImages.value = []
     status.value = 'idle'
   } catch (e) {
     status.value = 'error'
-    error.value = e instanceof Error ? e.message : '리뷰 등록에 실패했어요.'
+    if (e instanceof ApiError) {
+      const body = e.body as { detail?: unknown } | undefined
+      if (body && typeof body.detail === 'string') {
+        error.value = body.detail
+      } else {
+        error.value = e.message || '리뷰 등록에 실패했어요.'
+      }
+    } else {
+      error.value = e instanceof Error ? e.message : '리뷰 등록에 실패했어요.'
+    }
   }
 }
 </script>
@@ -73,24 +121,13 @@ async function submit() {
 <template>
   <form class="space-y-3" @submit.prevent="submit">
     <div class="grid gap-3 sm:grid-cols-2">
-      <!-- 닉네임 입력 -->
       <div class="space-y-1">
-        <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">닉네임</div>
+        <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">주문자명</div>
         <input
           v-model="authorName"
           class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-          placeholder="예) 민지"
+          :placeholder="props.maskedName ? `${props.maskedName} (전체 이름 입력)` : '예) 민지'"
         />
-      </div>
-      <!-- 평점 선택 -->
-      <div class="space-y-1">
-        <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">평점</div>
-        <select
-          v-model.number="rating"
-          class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
-        >
-          <option v-for="n in 5" :key="n" :value="n">{{ n }}점</option>
-        </select>
       </div>
     </div>
     <!-- 리뷰 내용 입력 -->
@@ -111,6 +148,36 @@ async function submit() {
         class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
         placeholder="전화번호 마지막 4자리"
       />
+    </div>
+    <div class="space-y-2">
+      <div class="text-xs font-semibold text-zinc-600 dark:text-zinc-300">사진 첨부</div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+          @click="triggerPhotos"
+        >
+          사진 추가
+        </button>
+        <input ref="photoInput" type="file" accept="image/*" multiple class="sr-only" @change="onPickPhotos" />
+        <div class="text-xs text-zinc-500 dark:text-zinc-400">최대 6장</div>
+      </div>
+      <div v-if="localImages.length" class="grid grid-cols-3 gap-2">
+        <div
+          v-for="(img, idx) in localImages"
+          :key="img.previewUrl"
+          class="relative aspect-square overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+        >
+          <img :src="img.previewUrl" alt="" class="h-full w-full object-cover" />
+          <button
+            type="button"
+            class="absolute right-1 top-1 rounded-md bg-black/60 px-2 py-1 text-[10px] font-semibold text-white"
+            @click="removePhoto(idx)"
+          >
+            삭제
+          </button>
+        </div>
+      </div>
     </div>
     
     <!-- 제출 버튼 및 에러 메시지 -->

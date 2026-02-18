@@ -60,6 +60,13 @@ export type Review = {
   rating: number
   body: string
   createdAt: string
+  photos: ReviewPhoto[]
+}
+
+export type ReviewPhoto = {
+  id: string
+  url: string
+  sort: number
 }
 
 /**
@@ -217,6 +224,7 @@ export type PublicOrderDetail = {
   orderStatus: AdminOrderStatus
   productionSteps: ProductionStep[]
   items: { productId: string; productName: string; qty: number; productImageUrl: string }[]
+  customerName: string
   customerMaskedName: string
 }
 

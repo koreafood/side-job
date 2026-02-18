@@ -62,6 +62,12 @@ class UploadOut(BaseModel):
     contentType: str
 
 
+class ReviewPhotoOut(BaseModel):
+    id: str
+    url: str
+    sort: int
+
+
 class ReviewOut(BaseModel):
     id: str
     productId: str
@@ -69,14 +75,16 @@ class ReviewOut(BaseModel):
     rating: int
     body: str
     createdAt: datetime
+    photos: list[ReviewPhotoOut]
 
 
 class ReviewCreateIn(BaseModel):
     authorName: str = Field(min_length=1, max_length=40)
-    rating: int = Field(ge=1, le=5)
+    rating: int = Field(default=5, ge=1, le=5)
     body: str = Field(min_length=1, max_length=2000)
     orderId: str = Field(min_length=1, max_length=200)
     phoneLast4: str = Field(min_length=1, max_length=20)
+    photoUrls: list[str] = Field(default_factory=list, max_length=6)
 
 
 class CartItemOut(BaseModel):
@@ -230,6 +238,7 @@ class PublicOrderOut(BaseModel):
     orderStatus: str
     productionSteps: list[ProductionStepOut]
     items: list[PublicOrderItemOut]
+    customerName: str
     customerMaskedName: str
 
 class PublicOrderItemOut(BaseModel):

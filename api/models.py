@@ -71,6 +71,18 @@ class Review(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow) # 작성일시
 
 
+class ReviewPhoto(SQLModel, table=True):
+    """
+    리뷰 사진(ReviewPhoto) 모델
+    리뷰에 첨부된 사진입니다.
+    """
+    id: str = Field(primary_key=True) # 사진 ID
+    review_id: str # 리뷰 ID
+    url: str # 사진 URL
+    sort: int # 정렬 순서
+    created_at: datetime = Field(default_factory=datetime.utcnow) # 생성일시
+
+
 class Cart(SQLModel, table=True):
     """
     장바구니(Cart) 모델
