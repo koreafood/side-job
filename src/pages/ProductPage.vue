@@ -265,7 +265,7 @@ onMounted(() => {
             @click="addToCart"
           >
             <ShoppingCart class="h-4 w-4" />
-            주문하기
+            주문제작
           </button>
           <div
             v-if="cart.state.error"

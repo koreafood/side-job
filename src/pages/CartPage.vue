@@ -362,7 +362,7 @@ onMounted(() => {
             :disabled="items.length === 0"
             @click="placeOrder"
           >
-            주문하기
+            주문제작
           </button>
         </div>
       </aside>
