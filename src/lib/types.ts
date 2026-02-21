@@ -36,6 +36,7 @@ export type Product = {
   name: string
   description: string
   detailsHtml: string
+  smartstoreUrl: string
   packagingFee: number
   basePrice: number
   addPrice: number

@@ -5,6 +5,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+DEFAULT_SMARTSTORE_URL = "https://smartstore.naver.com/lalashopkr/products/5286642948"
+
 
 class SellerOut(BaseModel):
     id: str
@@ -28,6 +30,7 @@ class ProductOut(BaseModel):
     name: str
     description: str
     detailsHtml: str
+    smartstoreUrl: str
     packagingFee: int
     basePrice: int
     addPrice: int
@@ -45,6 +48,7 @@ class ProductCreateIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     description: str = Field(max_length=4000)
     detailsHtml: str = Field(default="", max_length=20000)
+    smartstoreUrl: str = Field(default=DEFAULT_SMARTSTORE_URL, max_length=2000)
     packagingFee: int = Field(ge=0, le=10_000_000)
     basePrice: int = Field(ge=0, le=10_000_000)
     addPrice: int = Field(ge=0, le=10_000_000)

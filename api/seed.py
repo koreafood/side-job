@@ -28,6 +28,7 @@ SELLER_AVATAR = "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=f
 PRODUCT_IMG_1 = "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=handmade%20wrap%20skirt%20laid%20flat%2C%20gray%20fabric%20with%20black%20animal%20silhouette%20pattern%2C%20studio%20lighting%2C%20minimal%20background%2C%20high%20detail%20photo&image_size=square_hd"
 PRODUCT_IMG_2 = "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=close%20up%20of%20gray%20fabric%20with%20black%20animal%20silhouette%20pattern%2C%20textile%20texture%2C%20studio%20lighting%2C%20high%20detail%20photo&image_size=square_hd"
 PRODUCT_IMG_3 = "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=handmade%20wrap%20skirt%20folded%2C%20gray%20fabric%20with%20black%20animal%20silhouette%20pattern%2C%20minimal%20background%2C%20studio%20lighting%2C%20high%20detail%20photo&image_size=square_hd"
+DEFAULT_SMARTSTORE_URL = "https://smartstore.naver.com/lalashopkr/products/5286642948"
 
 
 def seed_if_empty(session: Session) -> None:
@@ -63,6 +64,7 @@ def seed_if_empty(session: Session) -> None:
             seller_name=seller_name,
             name="오쿠치의 랩 스커트",
             description="핸드메이드 랩 스커트입니다.\n\n가벼운 착용감과 탄탄한 마감으로 데일리로 입기 좋아요.\n무늬는 해마다 조금씩 바뀝니다.",
+            smartstore_url=DEFAULT_SMARTSTORE_URL,
             packaging_fee=0,
             base_price=2000,
             add_price=1500,

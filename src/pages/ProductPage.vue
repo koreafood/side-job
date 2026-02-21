@@ -267,6 +267,14 @@ onMounted(() => {
             <ShoppingCart class="h-4 w-4" />
             주문제작
           </button>
+          <a
+            :href="product.smartstoreUrl || 'https://smartstore.naver.com/lalashopkr/products/5286642948'"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+          >
+            네이버스마트스토어
+          </a>
           <div
             v-if="cart.state.error"
             class="mt-3 text-xs font-semibold text-rose-600"

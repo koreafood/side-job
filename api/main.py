@@ -48,6 +48,7 @@ from api.models import (
     Seller,
 )
 from api.schemas import (
+    DEFAULT_SMARTSTORE_URL,
     CartItemAddIn,
     CartItemQtyIn,
     CartOut,
@@ -292,6 +293,13 @@ def _product_images(session: Session, product_id: str) -> list[ProductImageOut]:
     return out
 
 
+def _normalize_smartstore_url(value: str | None) -> str:
+    if value is None:
+        return DEFAULT_SMARTSTORE_URL
+    trimmed = value.strip()
+    return trimmed or DEFAULT_SMARTSTORE_URL
+
+
 def _product_out(session: Session, p: Product) -> ProductOut:
     return ProductOut(
         id=p.id,
@@ -300,6 +308,7 @@ def _product_out(session: Session, p: Product) -> ProductOut:
         name=p.name,
         description=p.description,
         detailsHtml=_abs_in_html(p.details_html or ""),
+        smartstoreUrl=_normalize_smartstore_url(p.smartstore_url),
         packagingFee=p.packaging_fee,
         basePrice=p.base_price,
         addPrice=p.add_price,
@@ -675,6 +684,7 @@ def create_admin_product(body: ProductCreateIn, session: Session = Depends(get_s
         name=body.name,
         description=body.description,
         details_html=_rewrite_details_html(body.detailsHtml, product_id),
+        smartstore_url=_normalize_smartstore_url(body.smartstoreUrl),
         packaging_fee=body.packagingFee,
         base_price=body.basePrice,
         add_price=body.addPrice,
@@ -716,6 +726,7 @@ def update_admin_product(
     p.name = body.name
     p.description = body.description
     p.details_html = _rewrite_details_html(body.detailsHtml, product_id)
+    p.smartstore_url = _normalize_smartstore_url(body.smartstoreUrl)
     p.packaging_fee = body.packagingFee
     p.base_price = body.basePrice
     p.add_price = body.addPrice

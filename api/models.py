@@ -40,6 +40,7 @@ class Product(SQLModel, table=True):
     name: str # 상품명
     description: str # 간단 설명
     details_html: str = "" # 상세 설명 (HTML 형식, Tiptap 에디터 작성)
+    smartstore_url: str = "https://smartstore.naver.com/lalashopkr/products/5286642948"
     packaging_fee: int = 0 # 포장비
     base_price: int = 0 # 기본가격
     add_price: int = 0 # 추가가격

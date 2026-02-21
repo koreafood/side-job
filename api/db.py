@@ -102,6 +102,10 @@ def init_db() -> None:
             palters.append("ALTER TABLE \"product\" ADD COLUMN base_price INTEGER DEFAULT 0")
         if "add_price" not in pexisting:
             palters.append("ALTER TABLE \"product\" ADD COLUMN add_price INTEGER DEFAULT 0")
+        if "smartstore_url" not in pexisting:
+            palters.append(
+                "ALTER TABLE \"product\" ADD COLUMN smartstore_url TEXT DEFAULT 'https://smartstore.naver.com/lalashopkr/products/5286642948'"
+            )
         for stmt in palters:
             conn.execute(text(stmt))
 

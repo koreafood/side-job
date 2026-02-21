@@ -23,6 +23,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 
 const router = useRouter()
+const defaultSmartstoreUrl = 'https://smartstore.naver.com/lalashopkr/products/5286642948'
 
 // 로딩/제출/에러 상태 관리
 const status = ref<'idle' | 'loading' | 'submitting' | 'error' | 'ready'>('idle')
@@ -39,6 +40,7 @@ const form = reactive({
   name: '',
   description: '',
   detailsHtml: '',
+  smartstoreUrl: defaultSmartstoreUrl,
   packagingFee: 0,
   basePrice: 2000,
   addPrice: 1500,
@@ -169,6 +171,7 @@ async function submit() {
       name: form.name.trim(),
       description: form.description.trim(),
       detailsHtml: form.detailsHtml,
+      smartstoreUrl: form.smartstoreUrl.trim(),
       packagingFee: Number(form.packagingFee),
       basePrice: Number(form.basePrice),
       addPrice: Number(form.addPrice),
@@ -284,6 +287,16 @@ onUnmounted(() => {
             class="w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
             placeholder="상품 설명을 입력해 주세요"
           />
+        </label>
+
+        <label class="space-y-1">
+          <div class="text-sm font-medium">스마트스토어 URL</div>
+          <input
+            v-model="form.smartstoreUrl"
+            type="url"
+            class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-emerald-500/30 transition focus:ring-4 dark:border-zinc-800 dark:bg-zinc-950"
+            placeholder="https://smartstore.naver.com/..."
+          >
         </label>
 
         <div class="space-y-2">

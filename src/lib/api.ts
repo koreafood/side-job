@@ -163,6 +163,7 @@ export const api = {
     name: string
     description: string
     detailsHtml?: string
+    smartstoreUrl?: string
     packagingFee: number
     basePrice: number
     addPrice: number
@@ -186,6 +187,7 @@ export const api = {
       name: string
       description: string
       detailsHtml?: string
+      smartstoreUrl?: string
       packagingFee: number
       basePrice: number
       addPrice: number
